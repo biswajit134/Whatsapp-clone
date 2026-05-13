@@ -1,15 +1,18 @@
 import React from 'react';
 import './SidebarChat.css';
+import { Link } from 'react-router-dom';
 
-function SidebarChat() {
+function SidebarChat({ id, name }) {
   return (
-    <div className="sidebarChat">
-      <span className="material-icons avatar">account_circle</span>
-      <div className="sidebarChat__info">
-        <h2>Global Chat</h2>
-        <p>Latest message...</p>
+    <Link to={`/rooms/${id}`} style={{ textDecoration: 'none', color: 'black' }}>
+      <div className="sidebarChat">
+        <span className="material-icons avatar">account_circle</span>
+        <div className="sidebarChat__info">
+          <h2>{name}</h2>
+          <p>Click to view messages...</p>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

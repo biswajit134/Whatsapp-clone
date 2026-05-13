@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import Messages from './models/Message.js';
+import Rooms from './models/Room.js';
 
 // Load environment variables
 dotenv.config();
@@ -51,16 +52,31 @@ db.once('open', () => {
   console.log('DB connected');
 
   const msgCollection = db.collection('messagecontents');
-  const changeStream = msgCollection.watch();
+  const msgChangeStream = msgCollection.watch();
 
-  changeStream.on('change', (change) => {
+  msgChangeStream.on('change', (change) => {
     if (change.operationType === 'insert') {
       const messageDetails = change.fullDocument;
-      io.emit('inserted', {
+      io.emit('inserted_message', {
+        _id: messageDetails._id,
         name: messageDetails.name,
         message: messageDetails.message,
         timestamp: messageDetails.timestamp,
         received: messageDetails.received,
+        roomId: messageDetails.roomId
+      });
+    }
+  });
+
+  const roomCollection = db.collection('rooms');
+  const roomChangeStream = roomCollection.watch();
+
+  roomChangeStream.on('change', (change) => {
+    if (change.operationType === 'insert') {
+      const roomDetails = change.fullDocument;
+      io.emit('inserted_room', {
+        _id: roomDetails._id,
+        name: roomDetails.name,
       });
     }
   });
@@ -75,9 +91,37 @@ io.on('connection', (socket) => {
 });
 
 // API routes
-app.get('/api/messages/sync', async (req, res) => {
+app.get('/api/rooms', async (req, res) => {
   try {
-    const data = await Messages.find({});
+    const data = await Rooms.find({});
+    res.status(200).send(data);
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+app.post('/api/rooms/new', async (req, res) => {
+  const dbRoom = req.body;
+  try {
+    const data = await Rooms.create(dbRoom);
+    res.status(201).send(data);
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+app.get('/api/rooms/:roomId', async (req, res) => {
+  try {
+    const data = await Rooms.findById(req.params.roomId);
+    res.status(200).send(data);
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+app.get('/api/messages/:roomId', async (req, res) => {
+  try {
+    const data = await Messages.find({ roomId: req.params.roomId });
     res.status(200).send(data);
   } catch (err) {
     res.status(500).send({ error: err.message });

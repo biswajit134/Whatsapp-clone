@@ -1,20 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Chat.css';
 import axios from './axios';
+import socket from './socket';
+import { useParams } from 'react-router-dom';
 
-function Chat({ messages }) {
+function Chat() {
   const [input, setInput] = useState('');
+  const [roomName, setRoomName] = useState('');
+  const [messages, setMessages] = useState([]);
+  const { roomId } = useParams();
+
+  useEffect(() => {
+    if (roomId) {
+      axios.get(`/api/rooms/${roomId}`).then(response => {
+        setRoomName(response.data.name);
+      });
+
+      axios.get(`/api/messages/${roomId}`).then(response => {
+        setMessages(response.data);
+      });
+    }
+  }, [roomId]);
+
+  useEffect(() => {
+    const handleNewMessage = (newMessage) => {
+      if (newMessage.roomId === roomId) {
+        setMessages((prev) => [...prev, newMessage]);
+      }
+    };
+
+    socket.on('inserted_message', handleNewMessage);
+
+    return () => {
+      socket.off('inserted_message', handleNewMessage);
+    };
+  }, [roomId]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
 
-    if (!input.trim()) return;
+    if (!input.trim() || !roomId) return;
 
-    await axios.post('/messages/new', {
+    await axios.post('/api/messages/new', {
       message: input,
       name: 'User', // Hardcoded for this simple clone
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       received: false,
+      roomId: roomId
     });
 
     setInput('');
@@ -25,7 +57,7 @@ function Chat({ messages }) {
       <div className="chat__header">
         <span className="material-icons avatar">account_circle</span>
         <div className="chat__headerInfo">
-          <h3>Global Chat</h3>
+          <h3>{roomName}</h3>
           <p>Last seen today</p>
         </div>
         <div className="chat__headerRight">
