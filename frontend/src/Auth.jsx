@@ -21,7 +21,7 @@ function Auth({ setUser }) {
     setError('');
 
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const endpoint = isLogin ? '/auth/login' : '/auth/register';
       const response = await axios.post(endpoint, formData);
       
       const userData = response.data;

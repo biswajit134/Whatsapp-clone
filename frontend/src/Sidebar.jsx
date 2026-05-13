@@ -9,7 +9,7 @@ function Sidebar({ user, setUser }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    axios.get('/api/rooms').then(response => {
+    axios.get('/rooms').then(response => {
       setRooms(response.data);
     });
 
@@ -27,7 +27,7 @@ function Sidebar({ user, setUser }) {
   const createChat = async () => {
     const roomName = prompt("Please enter name for chat");
     if (roomName) {
-      await axios.post('/api/rooms/new', {
+      await axios.post('/rooms/new', {
         name: roomName
       });
     }

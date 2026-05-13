@@ -21,11 +21,11 @@ function Chat({ user }) {
 
   useEffect(() => {
     if (roomId) {
-      axios.get(`/api/rooms/${roomId}`).then(response => {
+      axios.get(`/rooms/${roomId}`).then(response => {
         setRoomName(response.data.name);
       });
 
-      axios.get(`/api/messages/${roomId}`).then(response => {
+      axios.get(`/messages/${roomId}`).then(response => {
         setMessages(response.data);
       });
     }
@@ -50,7 +50,7 @@ function Chat({ user }) {
 
     if (!input.trim() || !roomId) return;
 
-    await axios.post('/api/messages/new', {
+    await axios.post('/messages/new', {
       message: input,
       name: user?.user?.name || 'User',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
