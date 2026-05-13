@@ -14,6 +14,7 @@ function Chat({ user, onlineUsers }) {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const fileInputRef = useRef(null);
 
   // Compute composite roomId
   const currentUserId = user?.user?._id;
@@ -140,6 +141,34 @@ function Chat({ user, onlineUsers }) {
     }
   };
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 20 * 1024 * 1024) {
+      alert("File is too large! Maximum 20MB allowed.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = async () => {
+      const base64File = reader.result;
+      const messageType = file.type.startsWith('image/') ? 'image' : 
+                          file.type.startsWith('audio/') ? 'audio_file' : 'file';
+                          
+      await axios.post('/api/messages/new', {
+        message: base64File,
+        name: user?.user?.name || 'User',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        received: false,
+        roomId: roomId,
+        messageType: messageType
+      });
+    };
+    e.target.value = null; // reset input
+  };
+
   const startAudioCall = () => {
     const event = new CustomEvent('initiate_call', { 
       detail: { otherUserId, otherUserName: otherUser?.name, callType: 'audio' } 
@@ -176,12 +205,14 @@ function Chat({ user, onlineUsers }) {
         {messages.map((message, i) => (
           <p key={i} className={`chat__message ${message.name === user?.user?.name ? 'chat__receiver' : ''}`}>
             <span className="chat__name">{message.name}</span>
-            {message.messageType === 'audio' ? (
+            {message.messageType === 'audio' || message.messageType === 'audio_file' ? (
               <audio controls src={message.message} style={{ maxWidth: '250px', marginTop: '10px', display: 'block' }} />
+            ) : message.messageType === 'image' ? (
+              <img src={message.message} alt="shared media" style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '10px', marginTop: '5px', display: 'block' }} />
             ) : (
               message.message
             )}
-            <span className="chat__timestamp" style={{ display: 'inline-flex', alignItems: 'center', marginTop: message.messageType === 'audio' ? '5px' : '0' }}>
+            <span className="chat__timestamp" style={{ display: 'inline-flex', alignItems: 'center', marginTop: message.messageType !== 'text' && message.messageType ? '5px' : '0' }}>
               {message.timestamp}
               {message.name === user?.user?.name && (
                 <span className="material-icons" style={{ fontSize: '15px', marginLeft: '4px', color: message.seen ? '#34B7F1' : 'gray' }}>
@@ -196,6 +227,14 @@ function Chat({ user, onlineUsers }) {
 
       <div className="chat__footer">
         <span className="material-icons">insert_emoticon</span>
+        <span className="material-icons" onClick={() => fileInputRef.current.click()} style={{cursor: 'pointer', margin: '0 10px'}} title="Attach File">attach_file</span>
+        <input 
+          type="file" 
+          accept="image/*,audio/*" 
+          ref={fileInputRef} 
+          style={{ display: 'none' }} 
+          onChange={handleFileSelect} 
+        />
         {isRecording ? (
           <div style={{ flex: 1, color: '#ef5350', fontWeight: 'bold', padding: '0 15px', display: 'flex', alignItems: 'center' }}>
             <span className="material-icons" style={{ animation: 'pulse 1.5s infinite', marginRight: '10px' }}>mic</span>
