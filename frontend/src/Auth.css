@@ -2,16 +2,16 @@
   display: grid;
   place-items: center;
   height: 100vh;
-  background-color: #f8f8f8;
+  background-color: #0a1014;
   width: 100vw;
 }
 
 .auth__container {
   padding: 40px;
   text-align: center;
-  background-color: white;
+  background-color: #111b21;
   border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   width: 100%;
   max-width: 400px;
 }
@@ -22,7 +22,7 @@
 
 .auth__text h1 {
   font-size: 24px;
-  color: #128C7E;
+  color: #e9edef;
 }
 
 .auth__error {
@@ -39,7 +39,9 @@
 .auth__form input {
   padding: 12px;
   margin-bottom: 15px;
-  border: 1px solid #ddd;
+  border: 1px solid #202c33;
+  background-color: #2a3942;
+  color: #e9edef;
   border-radius: 5px;
   font-size: 16px;
   outline: none;
@@ -66,7 +68,7 @@
 
 .auth__toggle {
   margin-top: 20px;
-  color: #555;
+  color: #8696a0;
   cursor: pointer;
   font-size: 14px;
 }

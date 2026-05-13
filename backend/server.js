@@ -60,8 +60,36 @@ io.on('connection', (socket) => {
     io.emit('online_users', Array.from(onlineUsers.keys()));
   });
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+  // WebRTC Calling Signaling
+  socket.on('call_user', (data) => {
+    const socketIdToCall = onlineUsers.get(data.userToCall);
+    if (socketIdToCall) {
+      io.to(socketIdToCall).emit('incoming_call', { offer: data.offer, from: data.from, name: data.name, callType: data.callType });
+    }
+  });
+
+  socket.on('answer_call', (data) => {
+    const socketId = onlineUsers.get(data.to);
+    if (socketId) {
+      io.to(socketId).emit('call_accepted', data.answer);
+    }
+  });
+
+  socket.on('ice_candidate', (data) => {
+    const socketId = onlineUsers.get(data.to);
+    if (socketId) {
+      io.to(socketId).emit('ice_candidate', { candidate: data.candidate, from: data.from });
+    }
+  });
+
+  socket.on('end_call', (data) => {
+    const socketId = onlineUsers.get(data.to);
+    if (socketId) {
+      io.to(socketId).emit('call_ended');
+    }
+  });
+
+  const removeUser = () => {
     for (let [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) {
         onlineUsers.delete(userId);
@@ -69,6 +97,15 @@ io.on('connection', (socket) => {
         break;
       }
     }
+  };
+
+  socket.on('user_disconnected', () => {
+    removeUser();
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+    removeUser();
   });
 });
 
@@ -125,6 +162,20 @@ app.post('/api/messages/new', async (req, res) => {
     const data = await Messages.create(dbMessage);
     io.emit('inserted_message', data.toJSON());
     res.status(201).send(data);
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+app.post('/api/messages/seen', async (req, res) => {
+  const { roomId, username } = req.body;
+  try {
+    await Messages.updateMany(
+      { roomId: roomId, name: { $ne: username }, seen: false },
+      { $set: { seen: true } }
+    );
+    io.emit('messages_seen', { roomId });
+    res.status(200).send({ success: true });
   } catch (err) {
     res.status(500).send({ error: err.message });
   }

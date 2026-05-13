@@ -5,6 +5,7 @@ const whatsappSchema = mongoose.Schema({
   name: String,
   timestamp: String,
   received: Boolean,
+  seen: { type: Boolean, default: false },
   roomId: String
 });
 

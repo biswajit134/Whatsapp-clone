@@ -3,6 +3,7 @@ import './App.css';
 import Sidebar from './Sidebar';
 import Chat from './Chat';
 import Auth from './Auth';
+import AudioCall from './AudioCall';
 import socket from './socket';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -20,6 +21,8 @@ function App() {
   useEffect(() => {
     if (user?.user?._id) {
       socket.emit('user_connected', user.user._id);
+    } else {
+      socket.emit('user_disconnected');
     }
     
     socket.on('online_users', (users) => {
@@ -37,6 +40,7 @@ function App() {
 
   return (
     <div className="app">
+      <AudioCall user={user} />
       <div className="app__body">
         <Router>
           <Sidebar user={user} setUser={setUser} onlineUsers={onlineUsers} />

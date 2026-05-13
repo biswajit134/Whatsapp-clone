@@ -50,12 +50,30 @@ function Chat({ user, onlineUsers }) {
       }
     };
 
+    const handleSeen = (data) => {
+      if (data.roomId === roomId) {
+        setMessages((prev) => prev.map(m => ({ ...m, seen: true })));
+      }
+    };
+
     socket.on('inserted_message', handleNewMessage);
+    socket.on('messages_seen', handleSeen);
 
     return () => {
       socket.off('inserted_message', handleNewMessage);
+      socket.off('messages_seen', handleSeen);
     };
   }, [roomId]);
+
+  // Mark messages as read when opening chat or receiving new messages
+  useEffect(() => {
+    if (roomId && user?.user?.name) {
+      axios.post('/api/messages/seen', {
+        roomId: roomId,
+        username: user.user.name
+      }).catch(err => console.error(err));
+    }
+  }, [roomId, messages.length, user]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -73,6 +91,20 @@ function Chat({ user, onlineUsers }) {
     setInput('');
   };
 
+  const startAudioCall = () => {
+    const event = new CustomEvent('initiate_call', { 
+      detail: { otherUserId, otherUserName: otherUser?.name, callType: 'audio' } 
+    });
+    window.dispatchEvent(event);
+  };
+
+  const startVideoCall = () => {
+    const event = new CustomEvent('initiate_call', { 
+      detail: { otherUserId, otherUserName: otherUser?.name, callType: 'video' } 
+    });
+    window.dispatchEvent(event);
+  };
+
   return (
     <div className="chat">
       <div className="chat__header">
@@ -84,6 +116,8 @@ function Chat({ user, onlineUsers }) {
           </p>
         </div>
         <div className="chat__headerRight">
+          <span className="material-icons" onClick={startVideoCall} style={{cursor: 'pointer', marginRight: '15px'}} title="Video Call">videocam</span>
+          <span className="material-icons" onClick={startAudioCall} style={{cursor: 'pointer'}} title="Audio Call">call</span>
           <span className="material-icons">search</span>
           <span className="material-icons">more_vert</span>
         </div>
@@ -94,7 +128,14 @@ function Chat({ user, onlineUsers }) {
           <p key={i} className={`chat__message ${message.name === user?.user?.name ? 'chat__receiver' : ''}`}>
             <span className="chat__name">{message.name}</span>
             {message.message}
-            <span className="chat__timestamp">{message.timestamp}</span>
+            <span className="chat__timestamp" style={{ display: 'inline-flex', alignItems: 'center' }}>
+              {message.timestamp}
+              {message.name === user?.user?.name && (
+                <span className="material-icons" style={{ fontSize: '15px', marginLeft: '4px', color: message.seen ? '#34B7F1' : 'gray' }}>
+                  done_all
+                </span>
+              )}
+            </span>
           </p>
         ))}
         <div ref={messagesEndRef} />
