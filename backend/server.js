@@ -119,6 +119,21 @@ app.get('/api/users', async (req, res) => {
     res.status(500).send({ error: err.message });
   }
 });
+
+app.post('/api/users/profilePic', async (req, res) => {
+  try {
+    const { userId, profilePic } = req.body;
+    await User.findByIdAndUpdate(userId, { profilePic });
+    
+    const updatedUser = await User.findById(userId, '-password');
+    io.emit('user_updated', updatedUser);
+    
+    res.status(200).send({ success: true, profilePic });
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
 app.get('/api/rooms', async (req, res) => {
   try {
     const data = await Rooms.find({});
@@ -203,7 +218,8 @@ app.post('/api/auth/register', async (req, res) => {
       _id: newUser._id,
       name: newUser.name,
       email: newUser.email,
-      phone: newUser.phone
+      phone: newUser.phone,
+      profilePic: newUser.profilePic
     };
 
     io.emit('new_user', userObj);
@@ -212,12 +228,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     res.status(201).json({
       token,
-      user: {
-        _id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        phone: newUser.phone
-      }
+      user: userObj
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -242,7 +253,8 @@ app.post('/api/auth/login', async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        phone: user.phone
+        phone: user.phone,
+        profilePic: user.profilePic
       }
     });
   } catch (err) {

@@ -15,6 +15,7 @@ function Chat({ user, onlineUsers }) {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const fileInputRef = useRef(null);
+  const [viewingProfilePic, setViewingProfilePic] = useState(null);
 
   // Compute composite roomId
   const currentUserId = user?.user?._id;
@@ -32,13 +33,24 @@ function Chat({ user, onlineUsers }) {
 
   useEffect(() => {
     if (otherUserId) {
-      // Get the other user's name
       axios.get('/api/users').then(response => {
-        const contact = response.data.find(u => u._id === otherUserId);
-        setOtherUser(contact);
-      }).catch(err => console.error(err));
+        const targetUser = response.data.find(u => u._id === otherUserId);
+        setOtherUser(targetUser);
+      });
     }
+  }, [otherUserId]);
 
+  useEffect(() => {
+    const handleUserUpdated = (updatedUser) => {
+      if (updatedUser._id === otherUserId) {
+        setOtherUser(updatedUser);
+      }
+    };
+    socket.on('user_updated', handleUserUpdated);
+    return () => socket.off('user_updated', handleUserUpdated);
+  }, [otherUserId]);
+
+  useEffect(() => {
     if (roomId) {
       axios.get(`/api/messages/${roomId}`)
         .then(response => {
@@ -185,8 +197,23 @@ function Chat({ user, onlineUsers }) {
 
   return (
     <div className="chat">
+      {/* Profile Picture Modal */}
+      {viewingProfilePic && (
+        <div 
+          style={{ position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(11, 20, 26, 0.9)', zIndex: 10000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+          onClick={() => setViewingProfilePic(null)}
+        >
+          <img src={viewingProfilePic} alt="Large Profile" style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '10px', boxShadow: '0 4px 30px rgba(0,0,0,0.5)' }} />
+          <span className="material-icons" style={{ position: 'absolute', top: 30, right: 30, color: 'white', fontSize: 40, cursor: 'pointer' }} onClick={() => setViewingProfilePic(null)}>close</span>
+        </div>
+      )}
+
       <div className="chat__header">
-        <span className="material-icons avatar">account_circle</span>
+        {otherUser?.profilePic ? (
+          <img src={otherUser.profilePic} alt="profile" style={{ width: 45, height: 45, borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }} onClick={() => setViewingProfilePic(otherUser.profilePic)} title="View Profile Picture" />
+        ) : (
+          <span className="material-icons avatar">account_circle</span>
+        )}
         <div className="chat__headerInfo">
           <h3>{otherUser?.name || 'Loading...'}</h3>
           <p style={{color: onlineUsers.includes(otherUserId) ? '#25D366' : 'gray', fontWeight: 500}}>
@@ -255,6 +282,8 @@ function Chat({ user, onlineUsers }) {
         )}
         {isRecording ? (
           <span className="material-icons" onClick={stopRecording} style={{ color: '#ef5350', cursor: 'pointer' }} title="Stop & Send">stop_circle</span>
+        ) : input.trim().length > 0 ? (
+          <span className="material-icons" onClick={sendMessage} style={{ cursor: 'pointer' }} title="Send Message">send</span>
         ) : (
           <span className="material-icons" onClick={startRecording} style={{ cursor: 'pointer' }} title="Hold to Record">mic</span>
         )}
