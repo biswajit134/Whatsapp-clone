@@ -21,13 +21,17 @@ function Chat({ user }) {
 
   useEffect(() => {
     if (roomId) {
-      axios.get(`/api/rooms/${roomId}`).then(response => {
-        setRoomName(response.data.name);
-      });
+      axios.get(`/api/rooms/${roomId}`)
+        .then(response => {
+          setRoomName(response.data?.name || 'Unknown Room');
+        })
+        .catch(err => console.error("Error fetching room", err));
 
-      axios.get(`/api/messages/${roomId}`).then(response => {
-        setMessages(response.data);
-      });
+      axios.get(`/api/messages/${roomId}`)
+        .then(response => {
+          setMessages(Array.isArray(response.data) ? response.data : []);
+        })
+        .catch(err => console.error("Error fetching messages", err));
     }
   }, [roomId]);
 
@@ -76,8 +80,8 @@ function Chat({ user }) {
       </div>
 
       <div className="chat__body">
-        {messages.map((message, i) => (
-          <p key={i} className={`chat__message ${message.name === user?.user?.name && 'chat__receiver'}`}>
+        {Array.isArray(messages) && messages.map((message, i) => (
+          <p key={i} className={`chat__message ${message.name === user?.user?.name ? 'chat__receiver' : ''}`}>
             <span className="chat__name">{message.name}</span>
             {message.message}
             <span className="chat__timestamp">{message.timestamp}</span>
