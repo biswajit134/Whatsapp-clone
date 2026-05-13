@@ -3,9 +3,14 @@
   padding: 20px;
   cursor: pointer;
   border-bottom: 1px solid #f6f6f6;
+  transition: background-color 0.2s ease-in-out;
 }
 
 .sidebarChat:hover {
+  background-color: #ebebeb;
+}
+
+.sidebarChat--active {
   background-color: #ebebeb;
 }
 

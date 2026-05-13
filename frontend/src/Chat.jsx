@@ -1,14 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Chat.css';
 import axios from './axios';
 import socket from './socket';
 import { useParams } from 'react-router-dom';
 
-function Chat() {
+function Chat({ user }) {
   const [input, setInput] = useState('');
   const [roomName, setRoomName] = useState('');
   const [messages, setMessages] = useState([]);
   const { roomId } = useParams();
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     if (roomId) {
@@ -43,7 +52,7 @@ function Chat() {
 
     await axios.post('/api/messages/new', {
       message: input,
-      name: 'User', // Hardcoded for this simple clone
+      name: user?.user?.name || 'User',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       received: false,
       roomId: roomId
@@ -68,12 +77,13 @@ function Chat() {
 
       <div className="chat__body">
         {messages.map((message, i) => (
-          <p key={i} className={`chat__message ${message.received && 'chat__receiver'}`}>
+          <p key={i} className={`chat__message ${message.name === user?.user?.name && 'chat__receiver'}`}>
             <span className="chat__name">{message.name}</span>
             {message.message}
             <span className="chat__timestamp">{message.timestamp}</span>
           </p>
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="chat__footer">
