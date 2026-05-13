@@ -14,6 +14,18 @@ function Sidebar({ user, setUser }) {
       const otherUsers = response.data.filter(u => u._id !== user?.user?._id);
       setContacts(otherUsers);
     }).catch(err => console.error(err));
+
+    const handleNewUser = (newUser) => {
+      if (newUser._id !== user?.user?._id) {
+        setContacts((prev) => {
+          if (prev.some(u => u._id === newUser._id)) return prev;
+          return [...prev, newUser];
+        });
+      }
+    };
+
+    socket.on('new_user', handleNewUser);
+    return () => socket.off('new_user', handleNewUser);
   }, [user]);
 
   const createChat = () => {

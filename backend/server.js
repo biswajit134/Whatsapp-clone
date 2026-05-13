@@ -132,6 +132,15 @@ app.post('/api/auth/register', async (req, res) => {
       name, email, password: hashedPassword, phone
     });
 
+    const userObj = {
+      _id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+      phone: newUser.phone
+    };
+
+    io.emit('new_user', userObj);
+
     const token = jwt.sign({ id: newUser._id }, JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({
