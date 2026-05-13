@@ -2,18 +2,20 @@
   display: grid;
   place-items: center;
   height: 100vh;
-  background-color: #0a1014;
+  background-color: var(--auth-bg);
   width: 100vw;
+  transition: background-color 0.3s;
 }
 
 .auth__container {
   padding: 40px;
   text-align: center;
-  background-color: #111b21;
+  background-color: var(--auth-panel);
   border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 3px var(--shadow-color);
   width: 100%;
   max-width: 400px;
+  transition: background-color 0.3s;
 }
 
 .auth__text {
@@ -22,7 +24,7 @@
 
 .auth__text h1 {
   font-size: 24px;
-  color: #e9edef;
+  color: var(--text-primary);
 }
 
 .auth__error {
@@ -39,12 +41,13 @@
 .auth__form input {
   padding: 12px;
   margin-bottom: 15px;
-  border: 1px solid #202c33;
-  background-color: #2a3942;
-  color: #e9edef;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-search-input);
+  color: var(--text-primary);
   border-radius: 5px;
   font-size: 16px;
   outline: none;
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
 }
 
 .auth__form input:focus {
@@ -68,7 +71,7 @@
 
 .auth__toggle {
   margin-top: 20px;
-  color: #8696a0;
+  color: var(--text-muted);
   cursor: pointer;
   font-size: 14px;
 }

@@ -11,6 +11,10 @@ function Chat({ user, onlineUsers }) {
   const { otherUserId } = useParams();
   const messagesEndRef = useRef(null);
 
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
   // Compute composite roomId
   const currentUserId = user?.user?._id;
   const roomId = currentUserId && otherUserId 
@@ -91,6 +95,51 @@ function Chat({ user, onlineUsers }) {
     setInput('');
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64AudioMessage = reader.result;
+          await axios.post('/api/messages/new', {
+            message: base64AudioMessage,
+            name: user?.user?.name || 'User',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            received: false,
+            roomId: roomId,
+            messageType: 'audio'
+          });
+        };
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      alert("Microphone access denied.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
   const startAudioCall = () => {
     const event = new CustomEvent('initiate_call', { 
       detail: { otherUserId, otherUserName: otherUser?.name, callType: 'audio' } 
@@ -124,11 +173,15 @@ function Chat({ user, onlineUsers }) {
       </div>
 
       <div className="chat__body">
-        {Array.isArray(messages) && messages.map((message, i) => (
+        {messages.map((message, i) => (
           <p key={i} className={`chat__message ${message.name === user?.user?.name ? 'chat__receiver' : ''}`}>
             <span className="chat__name">{message.name}</span>
-            {message.message}
-            <span className="chat__timestamp" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            {message.messageType === 'audio' ? (
+              <audio controls src={message.message} style={{ maxWidth: '250px', marginTop: '10px', display: 'block' }} />
+            ) : (
+              message.message
+            )}
+            <span className="chat__timestamp" style={{ display: 'inline-flex', alignItems: 'center', marginTop: message.messageType === 'audio' ? '5px' : '0' }}>
               {message.timestamp}
               {message.name === user?.user?.name && (
                 <span className="material-icons" style={{ fontSize: '15px', marginLeft: '4px', color: message.seen ? '#34B7F1' : 'gray' }}>
@@ -143,18 +196,29 @@ function Chat({ user, onlineUsers }) {
 
       <div className="chat__footer">
         <span className="material-icons">insert_emoticon</span>
-        <form>
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message"
-            type="text"
-          />
-          <button onClick={sendMessage} type="submit">
-            Send a message
-          </button>
-        </form>
-        <span className="material-icons">mic</span>
+        {isRecording ? (
+          <div style={{ flex: 1, color: '#ef5350', fontWeight: 'bold', padding: '0 15px', display: 'flex', alignItems: 'center' }}>
+            <span className="material-icons" style={{ animation: 'pulse 1.5s infinite', marginRight: '10px' }}>mic</span>
+            Recording Audio...
+          </div>
+        ) : (
+          <form onSubmit={sendMessage}>
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type a message"
+              type="text"
+            />
+            <button onClick={sendMessage} type="submit">
+              Send a message
+            </button>
+          </form>
+        )}
+        {isRecording ? (
+          <span className="material-icons" onClick={stopRecording} style={{ color: '#ef5350', cursor: 'pointer' }} title="Stop & Send">stop_circle</span>
+        ) : (
+          <span className="material-icons" onClick={startRecording} style={{ cursor: 'pointer' }} title="Hold to Record">mic</span>
+        )}
       </div>
     </div>
   );

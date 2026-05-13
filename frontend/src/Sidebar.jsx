@@ -4,7 +4,7 @@ import SidebarChat from './SidebarChat';
 import axios from './axios';
 import socket from './socket';
 
-function Sidebar({ user, setUser, onlineUsers }) {
+function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme }) {
   const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -37,10 +37,12 @@ function Sidebar({ user, setUser, onlineUsers }) {
       <div className="sidebar__header">
         <div className="sidebar__headerLeft" style={{display: 'flex', alignItems: 'center'}}>
           <span className="material-icons avatar" style={{marginRight: '10px'}}>account_circle</span>
-          <span style={{fontWeight: 600, color: '#111b21', fontSize: '16px'}}>{user?.user?.name}</span>
+          <span style={{fontWeight: 600, color: 'var(--text-primary)', fontSize: '16px'}}>{user?.user?.name}</span>
         </div>
         <div className="sidebar__headerRight">
-          <span className="material-icons" onClick={createChat} style={{cursor: 'pointer'}} title="New Chat">add</span>
+          <span className="material-icons" onClick={toggleTheme} style={{cursor: 'pointer'}} title="Toggle Theme">
+            {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+          </span>
           <span className="material-icons" onClick={() => {
             localStorage.removeItem('whatsapp_user');
             setUser(null);

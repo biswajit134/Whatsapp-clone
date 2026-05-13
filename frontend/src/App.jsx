@@ -10,6 +10,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 function App() {
   const [user, setUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [theme, setTheme] = useState(() => localStorage.getItem('whatsapp_theme') || 'dark');
 
   useEffect(() => {
     const loggedInUser = localStorage.getItem('whatsapp_user');
@@ -17,6 +18,19 @@ function App() {
       setUser(JSON.parse(loggedInUser));
     }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('whatsapp_theme', theme);
+    if (theme === 'light') {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   useEffect(() => {
     if (user?.user?._id) {
@@ -43,7 +57,7 @@ function App() {
       <AudioCall user={user} />
       <div className="app__body">
         <Router>
-          <Sidebar user={user} setUser={setUser} onlineUsers={onlineUsers} />
+          <Sidebar user={user} setUser={setUser} onlineUsers={onlineUsers} theme={theme} toggleTheme={toggleTheme} />
           <Routes>
             <Route path="/rooms/:otherUserId" element={<Chat user={user} onlineUsers={onlineUsers} />} />
             <Route path="/" element={

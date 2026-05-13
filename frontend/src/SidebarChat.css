@@ -2,16 +2,16 @@
   display: flex;
   padding: 20px;
   cursor: pointer;
-  border-bottom: 1px solid #202c33;
+  border-bottom: 1px solid var(--border-color);
   transition: background-color 0.2s ease-in-out;
 }
 
 .sidebarChat:hover {
-  background-color: #202c33;
+  background-color: var(--bg-chat-hover);
 }
 
 .sidebarChat--active {
-  background-color: #2a3942;
+  background-color: var(--bg-chat-active);
 }
 
 .sidebarChat__info {
@@ -22,10 +22,10 @@
   font-size: 17px;
   margin-bottom: 8px;
   font-weight: 400;
-  color: #e9edef;
+  color: var(--text-primary);
 }
 
 .avatar {
   font-size: 40px !important;
-  color: #dfe5e7;
+  color: var(--icon-color);
 }
