@@ -71,7 +71,7 @@ app.post('/api/rooms/new', async (req, res) => {
   const dbRoom = req.body;
   try {
     const data = await Rooms.create(dbRoom);
-    io.emit('inserted_room', data);
+    io.emit('inserted_room', data.toJSON());
     res.status(201).send(data);
   } catch (err) {
     res.status(500).send({ error: err.message });
@@ -100,7 +100,7 @@ app.post('/api/messages/new', async (req, res) => {
   const dbMessage = req.body;
   try {
     const data = await Messages.create(dbMessage);
-    io.emit('inserted_message', data);
+    io.emit('inserted_message', data.toJSON());
     res.status(201).send(data);
   } catch (err) {
     res.status(500).send({ error: err.message });
