@@ -28,7 +28,8 @@ function Auth({ setUser }) {
       localStorage.setItem('whatsapp_user', JSON.stringify(userData));
       setUser(userData);
     } catch (err) {
-      setError(err.response?.data?.error || 'Authentication failed');
+      console.error("Auth Error:", err);
+      setError(err.response?.data?.error || err.message || 'Authentication failed');
     }
   };
 

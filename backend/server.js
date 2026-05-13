@@ -39,8 +39,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" })); // Allow 
 app.use(morgan('common')); // Logging
 app.use(cors({
   origin: process.env.FRONTEND_URL || "*",
-  methods: ["GET", "POST"],
-  credentials: true
+  methods: ["GET", "POST"]
 }));
 
 // DB config
