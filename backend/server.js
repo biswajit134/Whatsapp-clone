@@ -58,6 +58,14 @@ io.on('connection', (socket) => {
 });
 
 // API routes
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find({}, '-password'); // exclude password
+    res.status(200).send(users);
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
 app.get('/api/rooms', async (req, res) => {
   try {
     const data = await Rooms.find({});

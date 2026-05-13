@@ -6,10 +6,16 @@ import { useParams } from 'react-router-dom';
 
 function Chat({ user }) {
   const [input, setInput] = useState('');
-  const [roomName, setRoomName] = useState('');
+  const [otherUser, setOtherUser] = useState(null);
   const [messages, setMessages] = useState([]);
-  const { roomId } = useParams();
+  const { otherUserId } = useParams();
   const messagesEndRef = useRef(null);
+
+  // Compute composite roomId
+  const currentUserId = user?.user?._id;
+  const roomId = currentUserId && otherUserId 
+    ? [currentUserId, otherUserId].sort().join('_') 
+    : null;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -20,20 +26,22 @@ function Chat({ user }) {
   }, [messages]);
 
   useEffect(() => {
-    if (roomId) {
-      axios.get(`/api/rooms/${roomId}`)
-        .then(response => {
-          setRoomName(response.data?.name || 'Unknown Room');
-        })
-        .catch(err => console.error("Error fetching room", err));
+    if (otherUserId) {
+      // Get the other user's name
+      axios.get('/api/users').then(response => {
+        const contact = response.data.find(u => u._id === otherUserId);
+        setOtherUser(contact);
+      }).catch(err => console.error(err));
+    }
 
+    if (roomId) {
       axios.get(`/api/messages/${roomId}`)
         .then(response => {
           setMessages(Array.isArray(response.data) ? response.data : []);
         })
         .catch(err => console.error("Error fetching messages", err));
     }
-  }, [roomId]);
+  }, [roomId, otherUserId]);
 
   useEffect(() => {
     const handleNewMessage = (newMessage) => {
@@ -70,8 +78,8 @@ function Chat({ user }) {
       <div className="chat__header">
         <span className="material-icons avatar">account_circle</span>
         <div className="chat__headerInfo">
-          <h3>{roomName}</h3>
-          <p>Last seen today</p>
+          <h3>{otherUser?.name || 'Loading...'}</h3>
+          <p>Direct Message</p>
         </div>
         <div className="chat__headerRight">
           <span className="material-icons">search</span>

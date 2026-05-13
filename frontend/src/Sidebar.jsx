@@ -5,32 +5,19 @@ import axios from './axios';
 import socket from './socket';
 
 function Sidebar({ user, setUser }) {
-  const [rooms, setRooms] = useState([]);
+  const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    axios.get('/api/rooms').then(response => {
-      setRooms(response.data);
-    });
+    axios.get('/api/users').then(response => {
+      // Filter out the currently logged in user
+      const otherUsers = response.data.filter(u => u._id !== user?.user?._id);
+      setContacts(otherUsers);
+    }).catch(err => console.error(err));
+  }, [user]);
 
-    const handleNewRoom = (newRoom) => {
-      setRooms((prevRooms) => [...prevRooms, newRoom]);
-    };
-
-    socket.on('inserted_room', handleNewRoom);
-
-    return () => {
-      socket.off('inserted_room', handleNewRoom);
-    };
-  }, []);
-
-  const createChat = async () => {
-    const roomName = prompt("Please enter name for chat");
-    if (roomName) {
-      await axios.post('/api/rooms/new', {
-        name: roomName
-      });
-    }
+  const createChat = () => {
+    alert("Direct messaging is enabled! Just click on a contact below to start chatting.");
   };
 
   return (
@@ -60,11 +47,17 @@ function Sidebar({ user, setUser }) {
         </div>
       </div>
       <div className="sidebar__chats">
-        {rooms
-          .filter(room => room.name.toLowerCase().includes(searchTerm.toLowerCase()))
-          .map(room => (
-            <SidebarChat key={room._id} id={room._id} name={room.name} />
-        ))}
+        {contacts.length === 0 ? (
+          <div style={{padding: 20, textAlign: 'center', color: 'gray'}}>
+            No other users registered yet.
+          </div>
+        ) : (
+          contacts
+            .filter(contact => contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            .map(contact => (
+              <SidebarChat key={contact._id} id={contact._id} name={contact.name} />
+          ))
+        )}
       </div>
     </div>
   );

@@ -5,10 +5,7 @@ const whatsappSchema = mongoose.Schema({
   name: String,
   timestamp: String,
   received: Boolean,
-  roomId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'rooms'
-  }
+  roomId: String
 });
 
 export default mongoose.model('messagecontents', whatsappSchema);

@@ -25,7 +25,7 @@ function App() {
         <Router>
           <Sidebar user={user} setUser={setUser} />
           <Routes>
-            <Route path="/rooms/:roomId" element={<Chat user={user} />} />
+            <Route path="/rooms/:otherUserId" element={<Chat user={user} />} />
             <Route path="/" element={
               <div className="chat">
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column', color: 'gray' }}>
