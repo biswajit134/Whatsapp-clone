@@ -200,16 +200,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Serve frontend in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
-
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-  });
-} else {
-  app.get('/', (req, res) => res.status(200).send('WhatsApp Clone API'));
-}
+app.get('/', (req, res) => res.status(200).send('WhatsApp Clone API'));
 
 // Listen
 httpServer.listen(port, () => console.log(`Listening on port ${port}`));

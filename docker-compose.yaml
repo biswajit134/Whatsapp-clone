@@ -24,8 +24,8 @@ services:
       - NODE_ENV=production
       # Important: In Docker Compose, the backend connects to MongoDB using the service name 'mongo'
       - MONGO_URI=mongodb://mongo:27017/whatsappdb
-      # URL of the frontend (for CORS restrictions)
-      - FRONTEND_URL=http://localhost:80
+      # URL of the frontend (for CORS restrictions). Browsers drop the :80 port.
+      - FRONTEND_URL=http://localhost
     depends_on:
       - mongo
     restart: unless-stopped
