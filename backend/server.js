@@ -50,10 +50,25 @@ mongoose.connect(connection_url)
   .catch((err) => console.log('MongoDB Connection Error: ', err));
 
 // Real-time socket connection
+const onlineUsers = new Map();
+
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
+
+  socket.on('user_connected', (userId) => {
+    onlineUsers.set(userId, socket.id);
+    io.emit('online_users', Array.from(onlineUsers.keys()));
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    for (let [userId, socketId] of onlineUsers.entries()) {
+      if (socketId === socket.id) {
+        onlineUsers.delete(userId);
+        io.emit('online_users', Array.from(onlineUsers.keys()));
+        break;
+      }
+    }
   });
 });
 

@@ -4,7 +4,7 @@ import axios from './axios';
 import socket from './socket';
 import { useParams } from 'react-router-dom';
 
-function Chat({ user }) {
+function Chat({ user, onlineUsers }) {
   const [input, setInput] = useState('');
   const [otherUser, setOtherUser] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -79,7 +79,9 @@ function Chat({ user }) {
         <span className="material-icons avatar">account_circle</span>
         <div className="chat__headerInfo">
           <h3>{otherUser?.name || 'Loading...'}</h3>
-          <p>Direct Message</p>
+          <p style={{color: onlineUsers.includes(otherUserId) ? '#25D366' : 'gray', fontWeight: 500}}>
+            {onlineUsers.includes(otherUserId) ? 'Online' : 'Offline'}
+          </p>
         </div>
         <div className="chat__headerRight">
           <span className="material-icons">search</span>

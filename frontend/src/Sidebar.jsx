@@ -4,7 +4,7 @@ import SidebarChat from './SidebarChat';
 import axios from './axios';
 import socket from './socket';
 
-function Sidebar({ user, setUser }) {
+function Sidebar({ user, setUser, onlineUsers }) {
   const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -67,7 +67,12 @@ function Sidebar({ user, setUser }) {
           contacts
             .filter(contact => contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
             .map(contact => (
-              <SidebarChat key={contact._id} id={contact._id} name={contact.name} />
+              <SidebarChat 
+                key={contact._id} 
+                id={contact._id} 
+                name={contact.name} 
+                isOnline={onlineUsers.includes(contact._id)} 
+              />
           ))
         )}
       </div>
