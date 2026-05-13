@@ -38,7 +38,7 @@ services:
       args:
         # This gets baked into the React frontend during the Docker build process.
         # It needs to be the URL that the browser uses to access the backend API.
-        - VITE_API_URL=http://localhost:9000/api
+        - VITE_API_URL=http://localhost:9000
     container_name: whatsapp_frontend
     ports:
       - "80:80"
