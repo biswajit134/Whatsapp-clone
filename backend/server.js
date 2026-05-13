@@ -49,41 +49,6 @@ mongoose.connect(connection_url)
   .then(() => console.log('MongoDB Connected'))
   .catch((err) => console.log('MongoDB Connection Error: ', err));
 
-const db = mongoose.connection;
-db.once('open', () => {
-  console.log('DB connected');
-
-  const msgCollection = db.collection('messagecontents');
-  const msgChangeStream = msgCollection.watch();
-
-  msgChangeStream.on('change', (change) => {
-    if (change.operationType === 'insert') {
-      const messageDetails = change.fullDocument;
-      io.emit('inserted_message', {
-        _id: messageDetails._id,
-        name: messageDetails.name,
-        message: messageDetails.message,
-        timestamp: messageDetails.timestamp,
-        received: messageDetails.received,
-        roomId: messageDetails.roomId
-      });
-    }
-  });
-
-  const roomCollection = db.collection('rooms');
-  const roomChangeStream = roomCollection.watch();
-
-  roomChangeStream.on('change', (change) => {
-    if (change.operationType === 'insert') {
-      const roomDetails = change.fullDocument;
-      io.emit('inserted_room', {
-        _id: roomDetails._id,
-        name: roomDetails.name,
-      });
-    }
-  });
-});
-
 // Real-time socket connection
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
@@ -106,6 +71,7 @@ app.post('/api/rooms/new', async (req, res) => {
   const dbRoom = req.body;
   try {
     const data = await Rooms.create(dbRoom);
+    io.emit('inserted_room', data);
     res.status(201).send(data);
   } catch (err) {
     res.status(500).send({ error: err.message });
@@ -134,6 +100,7 @@ app.post('/api/messages/new', async (req, res) => {
   const dbMessage = req.body;
   try {
     const data = await Messages.create(dbMessage);
+    io.emit('inserted_message', data);
     res.status(201).send(data);
   } catch (err) {
     res.status(500).send({ error: err.message });
