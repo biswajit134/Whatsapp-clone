@@ -1,0 +1,14 @@
+# Node
+node_modules
+npm-debug.log
+
+# Build output
+frontend/dist
+backend/dist
+
+# Environment variables
+.env
+.env.*.local
+
+# macOS
+.DS_Store
