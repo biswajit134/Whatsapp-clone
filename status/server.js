@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import Status from './models/Status.js';
+import './models/User.js'; // Must be imported so Mongoose registers the 'users' model for populate()
 
 dotenv.config();
 
