@@ -364,8 +364,70 @@
   border-radius: 50%;
   transition: background-color 0.2s;
 }
-
 .close-viewer:hover { background-color: rgba(255,255,255,0.15); }
+
+/* ── Viewer action buttons (share + close) ── */
+.viewer-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.viewer-action-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+  backdrop-filter: blur(4px);
+}
+
+.viewer-action-btn:hover {
+  background: rgba(255,255,255,0.22);
+  transform: scale(1.08);
+}
+
+.viewer-action-btn .material-icons { font-size: 20px !important; }
+
+.viewer-close-btn:hover { background: rgba(239,83,80,0.35); }
+
+/* ── Share toast notification ── */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.status-share-toast {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30,40,48,0.92);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 50;
+  animation: toastIn 0.25s ease;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.status-share-toast .material-icons { font-size: 16px !important; color: #25D366; }
+
 
 /* Content area */
 .viewer-content-area {

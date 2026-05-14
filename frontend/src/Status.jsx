@@ -140,6 +140,52 @@ function Status({ user }) {
     if (activeStatusIdx > 0) { setActiveStatusIdx(p => p - 1); setShowViews(false); }
   };
 
+  const handleShare = async () => {
+    if (!activeStatus) return;
+
+    const ownerName = activeGroup?.user?.name || 'Someone';
+    let shareText = `${ownerName}'s status`;
+    if (activeStatus.type === 'text' && activeStatus.content) {
+      shareText = `${ownerName}: "${activeStatus.content}"`;
+    }
+
+    try {
+      if (navigator.share) {
+        const shareData = {
+          title: `${ownerName}'s Status`,
+          text: shareText,
+        };
+        // If it's an image, try to share as file
+        if (activeStatus.type === 'image' && activeStatus.mediaUrl?.startsWith('data:image')) {
+          try {
+            const res  = await fetch(activeStatus.mediaUrl);
+            const blob = await res.blob();
+            const file = new File([blob], 'status.jpg', { type: blob.type });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              shareData.files = [file];
+            }
+          } catch { /* ignore file share errors, fall back to text share */ }
+        }
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copy text to clipboard
+        await navigator.clipboard.writeText(shareText);
+        // Briefly show a toast indicator
+        setShareToast(true);
+        setTimeout(() => setShareToast(false), 2000);
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        // User cancelled — silently ignore AbortError
+        try {
+          await navigator.clipboard.writeText(shareText);
+          setShareToast(true);
+          setTimeout(() => setShareToast(false), 2000);
+        } catch { /* clipboard also unavailable */ }
+      }
+    }
+  };
+
   const relTime = (d) => {
     const diff = (Date.now() - new Date(d)) / 60000;
     if (diff < 1)    return 'Just now';
@@ -152,6 +198,7 @@ function Status({ user }) {
   const activeStatus = activeGroup?.statuses[activeStatusIdx];
   const isOwnStatus  = activeGroup?.user._id === user.user._id;
   const viewCount    = activeStatus?.views?.length ?? 0;
+  const [shareToast, setShareToast] = useState(false);
 
   return (
     <div className="status-main" style={{ flex: 1 }}>
@@ -195,9 +242,33 @@ function Status({ user }) {
                   <div className="viewer-user-time">{relTime(activeStatus?.createdAt)}</div>
                 </div>
               </div>
-              <span className="material-icons close-viewer" onClick={() => { setActiveUserIdx(null); setShowViews(false); }}>close</span>
+              {/* Action buttons */}
+              <div className="viewer-actions">
+                <button
+                  className="viewer-action-btn"
+                  onClick={(e) => { e.stopPropagation(); handleShare(); }}
+                  title="Share Status"
+                >
+                  <span className="material-icons">share</span>
+                </button>
+                <button
+                  className="viewer-action-btn viewer-close-btn"
+                  onClick={(e) => { e.stopPropagation(); setActiveUserIdx(null); setShowViews(false); }}
+                  title="Close"
+                >
+                  <span className="material-icons">close</span>
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* ── Share toast ── */}
+          {shareToast && (
+            <div className="status-share-toast">
+              <span className="material-icons">content_copy</span>
+              Copied to clipboard!
+            </div>
+          )}
 
           {/* ── Content area ── */}
           <div className="viewer-content-area" onClick={showViews ? () => setShowViews(false) : handleNext}>
