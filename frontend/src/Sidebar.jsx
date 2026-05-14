@@ -17,6 +17,7 @@ function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme, isOpen, onClo
   const [groups, setGroups]       = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'groups' | 'online'
+  const [unreadCounts, setUnreadCounts] = useState({});
   const profilePicRef = useRef(null);
   const navigate = useNavigate();
 
@@ -45,6 +46,12 @@ function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme, isOpen, onClo
       setGroups(r.data.filter(room => room.isGroup && room.participants?.includes(user?.user?._id)));
     }).catch(console.error);
 
+    if (user?.user?.name) {
+      axios.get(`/api/messages/unread-counts/${user.user.name}`).then(r => {
+        setUnreadCounts(r.data);
+      }).catch(console.error);
+    }
+
     const onNewUser = (u) => {
       if (u._id !== user?.user?._id) {
         setContacts(prev => prev.some(c => c._id === u._id) ? prev : [...prev, u]);
@@ -64,14 +71,32 @@ function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme, isOpen, onClo
         setGroups(prev => prev.some(g => g._id === room._id) ? prev : [...prev, room]);
       }
     };
+    const onInsertedMessage = (msg) => {
+      if (msg.name !== user?.user?.name) {
+        setUnreadCounts(prev => ({
+          ...prev,
+          [msg.roomId]: (prev[msg.roomId] || 0) + 1
+        }));
+      }
+    };
+    const onMessagesSeen = ({ roomId }) => {
+      setUnreadCounts(prev => ({
+        ...prev,
+        [roomId]: 0
+      }));
+    };
 
     socket.on('new_user', onNewUser);
     socket.on('user_updated', onUserUpdated);
     socket.on('inserted_room', onInsertedRoom);
+    socket.on('inserted_message', onInsertedMessage);
+    socket.on('messages_seen', onMessagesSeen);
     return () => {
       socket.off('new_user', onNewUser);
       socket.off('user_updated', onUserUpdated);
       socket.off('inserted_room', onInsertedRoom);
+      socket.off('inserted_message', onInsertedMessage);
+      socket.off('messages_seen', onMessagesSeen);
     };
   }, [user]);
 
@@ -241,6 +266,7 @@ function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme, isOpen, onClo
                 name={group.name}
                 isGroup={true}
                 isOnline={false}
+                unreadCount={unreadCounts[group._id] || 0}
               />
             ))}
           </>
@@ -253,16 +279,20 @@ function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme, isOpen, onClo
               <span className="material-icons">person</span>
               {activeTab === 'online' ? 'Online Now' : 'Contacts'}
             </div>
-            {filteredContacts.map(contact => (
-              <SidebarChat
-                key={contact._id}
-                id={contact._id}
-                name={contact.name}
-                isOnline={onlineUsers.includes(contact._id)}
-                profilePic={contact.profilePic}
-                description={contact.description}
-              />
-            ))}
+            {filteredContacts.map(contact => {
+              const roomId = [user?.user?._id, contact._id].sort().join('_');
+              return (
+                <SidebarChat
+                  key={contact._id}
+                  id={contact._id}
+                  name={contact.name}
+                  isOnline={onlineUsers.includes(contact._id)}
+                  profilePic={contact.profilePic}
+                  description={contact.description}
+                  unreadCount={unreadCounts[roomId] || 0}
+                />
+              );
+            })}
           </>
         )}
 

@@ -233,6 +233,25 @@ app.post('/api/messages/seen', async (req, res) => {
   }
 });
 
+app.get('/api/messages/unread-counts/:username', async (req, res) => {
+  const { username } = req.params;
+  try {
+    const counts = await Messages.aggregate([
+      { $match: { name: { $ne: username }, seen: false } },
+      { $group: { _id: "$roomId", count: { $sum: 1 } } }
+    ]);
+    
+    const countMap = {};
+    counts.forEach(item => {
+      countMap[item._id] = item.count;
+    });
+    
+    res.status(200).send(countMap);
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
 app.post('/api/users/update', async (req, res) => {
   try {
     const { userId, name, email, password, phone, description } = req.body;

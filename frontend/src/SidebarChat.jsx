@@ -2,7 +2,7 @@ import React from 'react';
 import './SidebarChat.css';
 import { Link, useParams } from 'react-router-dom';
 
-function SidebarChat({ id, name, isOnline, profilePic, isGroup, description }) {
+function SidebarChat({ id, name, isOnline, profilePic, isGroup, description, unreadCount }) {
   const { otherUserId } = useParams();
   const isActive = otherUserId === id;
 
@@ -51,8 +51,14 @@ function SidebarChat({ id, name, isOnline, profilePic, isGroup, description }) {
           </div>
         </div>
 
-        {/* Arrow indicator */}
-        <span className="material-icons sidebarChat__arrow">chevron_right</span>
+        {/* Arrow indicator or Unread Count */}
+        {unreadCount > 0 ? (
+          <div className="sidebarChat__unread-badge">
+            {unreadCount}
+          </div>
+        ) : (
+          <span className="material-icons sidebarChat__arrow">chevron_right</span>
+        )}
       </div>
     </Link>
   );
