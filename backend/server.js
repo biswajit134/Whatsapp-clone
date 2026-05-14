@@ -90,6 +90,26 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('start_group_call', async (data) => {
+    const { groupId, callerName, callType } = data;
+    try {
+      const room = await Rooms.findById(groupId);
+      if (room && room.isGroup) {
+        room.participants.forEach(participantId => {
+          const pId = participantId.toString();
+          if (pId !== socket.id) { // Not to self, wait we don't have user id here easily except from onlineUsers
+             const socketId = onlineUsers.get(pId);
+             if (socketId) {
+               io.to(socketId).emit('incoming_group_call', { groupId, callerName, callType, groupName: room.name });
+             }
+          }
+        });
+      }
+    } catch(err) {
+      console.error(err);
+    }
+  });
+
   const removeUser = () => {
     for (let [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) {
@@ -154,6 +174,22 @@ app.post('/api/rooms/new', async (req, res) => {
   }
 });
 
+app.post('/api/groups/new', async (req, res) => {
+  const { name, participants, admin } = req.body;
+  try {
+    const data = await Rooms.create({
+      name,
+      isGroup: true,
+      participants,
+      admin
+    });
+    io.emit('inserted_room', data.toJSON());
+    res.status(201).send(data);
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
 app.get('/api/rooms/:roomId', async (req, res) => {
   try {
     const data = await Rooms.findById(req.params.roomId);
@@ -197,6 +233,27 @@ app.post('/api/messages/seen', async (req, res) => {
   }
 });
 
+app.post('/api/users/update', async (req, res) => {
+  try {
+    const { userId, name, email, password, phone, description } = req.body;
+    let updateFields = { name, email, phone, description };
+    
+    if (password && password.trim().length > 0) {
+      const salt = await bcrypt.genSalt(10);
+      updateFields.password = await bcrypt.hash(password, salt);
+    }
+    
+    await User.findByIdAndUpdate(userId, updateFields);
+    
+    const updatedUser = await User.findById(userId, '-password');
+    io.emit('user_updated', updatedUser);
+    
+    res.status(200).send({ success: true, user: updatedUser });
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
 // Auth Routes
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
 
@@ -219,7 +276,8 @@ app.post('/api/auth/register', async (req, res) => {
       name: newUser.name,
       email: newUser.email,
       phone: newUser.phone,
-      profilePic: newUser.profilePic
+      profilePic: newUser.profilePic,
+      description: newUser.description
     };
 
     io.emit('new_user', userObj);
@@ -254,7 +312,8 @@ app.post('/api/auth/login', async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        profilePic: user.profilePic
+        profilePic: user.profilePic,
+        description: user.description
       }
     });
   } catch (err) {

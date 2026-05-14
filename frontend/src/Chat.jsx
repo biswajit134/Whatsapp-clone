@@ -2,13 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import './Chat.css';
 import axios from './axios';
 import socket from './socket';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 
 function Chat({ user, onlineUsers }) {
   const [input, setInput] = useState('');
   const [otherUser, setOtherUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const { otherUserId } = useParams();
+  const location = useLocation();
+  const isGroup = location.state?.isGroup || false;
+  const groupName = location.state?.name || 'Group Chat';
+  
   const messagesEndRef = useRef(null);
 
   const [isRecording, setIsRecording] = useState(false);
@@ -19,9 +23,9 @@ function Chat({ user, onlineUsers }) {
 
   // Compute composite roomId
   const currentUserId = user?.user?._id;
-  const roomId = currentUserId && otherUserId 
-    ? [currentUserId, otherUserId].sort().join('_') 
-    : null;
+  const roomId = isGroup 
+    ? otherUserId // For groups, the ID is the roomId
+    : (currentUserId && otherUserId ? [currentUserId, otherUserId].sort().join('_') : null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -32,15 +36,18 @@ function Chat({ user, onlineUsers }) {
   }, [messages]);
 
   useEffect(() => {
-    if (otherUserId) {
+    if (otherUserId && !isGroup) {
       axios.get('/api/users').then(response => {
         const targetUser = response.data.find(u => u._id === otherUserId);
         setOtherUser(targetUser);
       });
+    } else {
+      setOtherUser(null);
     }
-  }, [otherUserId]);
+  }, [otherUserId, isGroup]);
 
   useEffect(() => {
+    if (isGroup) return;
     const handleUserUpdated = (updatedUser) => {
       if (updatedUser._id === otherUserId) {
         setOtherUser(updatedUser);
@@ -48,7 +55,7 @@ function Chat({ user, onlineUsers }) {
     };
     socket.on('user_updated', handleUserUpdated);
     return () => socket.off('user_updated', handleUserUpdated);
-  }, [otherUserId]);
+  }, [otherUserId, isGroup]);
 
   useEffect(() => {
     if (roomId) {
@@ -183,14 +190,14 @@ function Chat({ user, onlineUsers }) {
 
   const startAudioCall = () => {
     const event = new CustomEvent('initiate_call', { 
-      detail: { otherUserId, otherUserName: otherUser?.name, callType: 'audio' } 
+      detail: { otherUserId, otherUserName: isGroup ? groupName : otherUser?.name, callType: 'audio', isGroup } 
     });
     window.dispatchEvent(event);
   };
 
   const startVideoCall = () => {
     const event = new CustomEvent('initiate_call', { 
-      detail: { otherUserId, otherUserName: otherUser?.name, callType: 'video' } 
+      detail: { otherUserId, otherUserName: isGroup ? groupName : otherUser?.name, callType: 'video', isGroup } 
     });
     window.dispatchEvent(event);
   };
@@ -209,15 +216,19 @@ function Chat({ user, onlineUsers }) {
       )}
 
       <div className="chat__header">
-        {otherUser?.profilePic ? (
+        {isGroup ? (
+          <div style={{ width: 45, height: 45, borderRadius: '50%', backgroundColor: '#25D366', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white' }}>
+            <span className="material-icons">groups</span>
+          </div>
+        ) : otherUser?.profilePic ? (
           <img src={otherUser.profilePic} alt="profile" style={{ width: 45, height: 45, borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }} onClick={() => setViewingProfilePic(otherUser.profilePic)} title="View Profile Picture" />
         ) : (
           <span className="material-icons avatar">account_circle</span>
         )}
         <div className="chat__headerInfo">
-          <h3>{otherUser?.name || 'Loading...'}</h3>
-          <p style={{color: onlineUsers.includes(otherUserId) ? '#25D366' : 'gray', fontWeight: 500}}>
-            {onlineUsers.includes(otherUserId) ? 'Online' : 'Offline'}
+          <h3>{isGroup ? groupName : (otherUser?.name || 'Loading...')}</h3>
+          <p style={{color: isGroup ? 'gray' : (onlineUsers.includes(otherUserId) ? '#25D366' : 'gray'), fontWeight: 500}}>
+            {isGroup ? 'Group Chat' : (onlineUsers.includes(otherUserId) ? 'Online' : 'Offline')}
           </p>
         </div>
         <div className="chat__headerRight">
