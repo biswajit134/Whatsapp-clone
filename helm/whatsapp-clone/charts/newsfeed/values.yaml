@@ -1,0 +1,84 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/biswajit134/whatsapp-devops/newsfeed
+  pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 9001
+
+config:
+  port: "9001"
+  nodeEnv: "production"
+  mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb"
+
+extraEnvFrom: []
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: newsfeed.whatsapp.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# ---------------------------------------------------------------------------
+# Istio Service Mesh
+# ---------------------------------------------------------------------------
+istio:
+  enabled: true
+
+  virtualService:
+    timeout: "30s"
+    retries:
+      attempts: 3
+      perTryTimeout: "5s"
+      retryOn: "gateway-error,connect-failure,retriable-4xx"
+
+  destinationRule:
+    trafficPolicy:
+      tls:
+        mode: ISTIO_MUTUAL
+      connectionPool:
+        tcp:
+          maxConnections: 100
+        http:
+          http1MaxPendingRequests: 100
+          http2MaxRequests: 1000
+          idleTimeout: "90s"
+      outlierDetection:
+        consecutive5xxErrors: 5
+        interval: "10s"
+        baseEjectionTime: "30s"
+        maxEjectionPercent: 50
+

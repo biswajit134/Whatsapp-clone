@@ -13,9 +13,7 @@ services:
 
   # Node.js Express Backend Service
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/biswajit134/whatsapp-devops/backend:latest
     container_name: whatsapp_backend
     ports:
       - "9000:9000"
@@ -32,14 +30,7 @@ services:
 
   # React Vite Frontend Service (Nginx)
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=http://localhost:9000
-        - VITE_NEWSFEED_API_URL=http://localhost:9001
-        - VITE_STATUS_API_URL=http://localhost:9002
-        - VITE_REELS_API_URL=http://localhost:9003
+    image: ghcr.io/biswajit134/whatsapp-devops/frontend:latest
     container_name: whatsapp_frontend
     ports:
       - "80:80"
@@ -52,9 +43,7 @@ services:
 
   # Newsfeed Microservice
   newsfeed:
-    build:
-      context: ./newsfeed
-      dockerfile: Dockerfile
+    image: ghcr.io/biswajit134/whatsapp-devops/newsfeed:latest
     container_name: whatsapp_newsfeed
     ports:
       - "9001:9001"
@@ -68,9 +57,7 @@ services:
 
   # Status Microservice
   status:
-    build:
-      context: ./status
-      dockerfile: Dockerfile
+    image: ghcr.io/biswajit134/whatsapp-devops/status:latest
     container_name: whatsapp_status
     ports:
       - "9002:9002"
@@ -84,9 +71,7 @@ services:
 
   # Reels Microservice
   reels:
-    build:
-      context: ./reels
-      dockerfile: Dockerfile
+    image: ghcr.io/biswajit134/whatsapp-devops/reels:latest
     container_name: whatsapp_reels
     ports:
       - "9003:9003"

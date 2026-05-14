@@ -1,0 +1,6 @@
+apiVersion: v2
+name: newsfeed
+description: Newsfeed microservice for the WhatsApp-Clone application.
+type: application
+version: 1.0.0
+appVersion: "latest"

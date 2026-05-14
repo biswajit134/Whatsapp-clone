@@ -1,0 +1,113 @@
+##############################################################################
+# ArgoCD ApplicationSet — whatsapp-clone (multi-environment)
+#
+# Automatically generates one Application per environment defined in the
+# 'elements' list below.  Each environment points to a different values file
+# and namespace.
+#
+# Apply with:  kubectl apply -f argocd/applicationset.yaml -n argocd
+#
+# Prerequisites:
+#   helm/whatsapp-clone/values-dev.yaml     (create from values.yaml)
+#   helm/whatsapp-clone/values-staging.yaml (create from values.yaml)
+#   The 'values.yaml' file serves as the production values file.
+##############################################################################
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: whatsapp-clone-environments
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: whatsapp-clone
+    app.kubernetes.io/part-of: whatsapp-clone
+spec:
+  # --------------------------------------------------------------------------
+  # Generators — define the matrix of environments to deploy
+  # --------------------------------------------------------------------------
+  generators:
+    - list:
+        elements:
+          # ── Development ────────────────────────────────────────────────────
+          - env: dev
+            namespace: whatsapp-dev
+            targetRevision: HEAD        # always track latest commit in dev
+            valuesFile: values-dev.yaml
+            autoSync: "true"
+            prune: "true"
+            selfHeal: "true"
+
+          # ── Staging ────────────────────────────────────────────────────────
+          - env: staging
+            namespace: whatsapp-staging
+            targetRevision: HEAD
+            valuesFile: values-staging.yaml
+            autoSync: "true"
+            prune: "true"
+            selfHeal: "false"          # manual approval before self-healing staging
+
+          # ── Production ────────────────────────────────────────────────────
+          - env: prod
+            namespace: whatsapp
+            targetRevision: HEAD       # change to a Git tag for pinned prod releases
+            valuesFile: values.yaml
+            autoSync: "false"          # production syncs are manual for safety
+            prune: "false"
+            selfHeal: "false"
+
+  # --------------------------------------------------------------------------
+  # Application template — rendered once per element above
+  # --------------------------------------------------------------------------
+  template:
+    metadata:
+      name: "whatsapp-clone-{{env}}"
+      namespace: argocd
+      labels:
+        app.kubernetes.io/name: whatsapp-clone
+        environment: "{{env}}"
+      annotations:
+        argocd.argoproj.io/sync-wave: "0"
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+
+    spec:
+      project: whatsapp-clone
+
+      source:
+        repoURL: "https://github.com/biswajit134/Whatsapp-clone"
+        targetRevision: "{{targetRevision}}"
+        path: helm/whatsapp-clone
+        helm:
+          releaseName: "whatsapp-clone"
+          valueFiles:
+            - "{{valuesFile}}"
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - RespectIgnoreDifferences=true
+          - ApplyOutOfSyncOnly=true
+        retry:
+          limit: 5
+          backoff:
+            duration: "10s"
+            factor: 2
+            maxDuration: "5m"
+
+      ignoreDifferences:
+        - group: ""
+          kind: ServiceAccount
+          jsonPointers:
+            - /secrets
+        - group: ""
+          kind: Service
+          jsonPointers:
+            - /spec/clusterIP
+            - /spec/clusterIPs

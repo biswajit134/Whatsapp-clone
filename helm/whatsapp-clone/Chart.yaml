@@ -1,0 +1,25 @@
+apiVersion: v2
+name: whatsapp-clone
+description: >
+  Umbrella Helm chart for the WhatsApp-Clone microservices application.
+  Deploys backend, frontend, newsfeed, reels, and status services
+  alongside a MongoDB instance via the Bitnami sub-chart.
+type: application
+version: 1.0.0
+appVersion: "latest"
+maintainers:
+  - name: biswajit134
+
+keywords:
+  - whatsapp
+  - clone
+  - microservices
+  - chat
+  - realtime
+
+dependencies:
+  - name: mongodb
+    version: ">=15.0.0"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: mongodb.enabled
+    alias: mongodb

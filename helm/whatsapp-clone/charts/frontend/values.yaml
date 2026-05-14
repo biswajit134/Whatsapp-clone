@@ -1,0 +1,84 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/biswajit134/whatsapp-devops/frontend
+  pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: LoadBalancer
+  port: 80
+
+# Frontend is a static Nginx build – runtime env vars are not required by default.
+# Add any nginx-level env overrides here if your image supports them.
+config: {}
+
+extraEnvFrom: []
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: whatsapp.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# ---------------------------------------------------------------------------
+# Istio Service Mesh
+# ---------------------------------------------------------------------------
+istio:
+  enabled: true
+
+  virtualService:
+    timeout: "30s"
+    # externalHost: "app.example.com"   # override for the Gateway host match
+    retries:
+      attempts: 3
+      perTryTimeout: "10s"
+      retryOn: "gateway-error,connect-failure,retriable-4xx"
+
+  destinationRule:
+    trafficPolicy:
+      tls:
+        mode: ISTIO_MUTUAL
+      connectionPool:
+        tcp:
+          maxConnections: 100
+        http:
+          http1MaxPendingRequests: 100
+          http2MaxRequests: 1000
+          idleTimeout: "90s"
+      outlierDetection:
+        consecutive5xxErrors: 5
+        interval: "10s"
+        baseEjectionTime: "30s"
+        maxEjectionPercent: 50
+

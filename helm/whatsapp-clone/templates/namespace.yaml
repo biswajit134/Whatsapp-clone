@@ -1,0 +1,11 @@
+{{- if .Values.istio.enabled }}
+# Namespace with istio-injection label so every pod in 'whatsapp' gets a sidecar automatically.
+# Remove this resource if you manage the namespace externally.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  labels:
+    istio-injection: enabled
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}

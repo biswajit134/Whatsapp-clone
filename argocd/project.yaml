@@ -1,0 +1,96 @@
+##############################################################################
+# ArgoCD AppProject — whatsapp-clone
+#
+# Scopes permissions for the whatsapp-clone application set.
+# Apply with:  kubectl apply -f argocd/project.yaml -n argocd
+##############################################################################
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: whatsapp-clone
+  namespace: argocd          # ArgoCD always lives in the 'argocd' namespace
+  labels:
+    app.kubernetes.io/part-of: whatsapp-clone
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"   # Deploy project before applications
+spec:
+  description: "WhatsApp Clone — microservices project (backend, frontend, newsfeed, reels, status)"
+
+  # --------------------------------------------------------------------------
+  # Allowed source repositories
+  # --------------------------------------------------------------------------
+  sourceRepos:
+    - "https://github.com/biswajit134/Whatsapp-clone"   # App code + Helm charts
+    - "https://charts.bitnami.com/bitnami"               # MongoDB Helm dependency
+    - "ghcr.io/biswajit134/*"                            # GHCR OCI images
+
+  # --------------------------------------------------------------------------
+  # Allowed deployment destinations
+  # --------------------------------------------------------------------------
+  destinations:
+    - server: https://kubernetes.default.svc   # in-cluster
+      namespace: whatsapp
+    - server: https://kubernetes.default.svc
+      namespace: whatsapp-dev
+    - server: https://kubernetes.default.svc
+      namespace: whatsapp-staging
+
+  # --------------------------------------------------------------------------
+  # Cluster-scoped resources the project may manage
+  # (Namespace is needed because namespace.yaml creates the 'whatsapp' namespace
+  #  with the istio-injection label)
+  # --------------------------------------------------------------------------
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: "networking.istio.io"
+      kind: Gateway
+    - group: "security.istio.io"
+      kind: PeerAuthentication
+
+  # --------------------------------------------------------------------------
+  # Namespace-scoped resources the project may manage
+  # --------------------------------------------------------------------------
+  namespaceResourceWhitelist:
+    - group: "apps"
+      kind: Deployment
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: ServiceAccount
+    - group: "autoscaling"
+      kind: HorizontalPodAutoscaler
+    - group: "networking.k8s.io"
+      kind: Ingress
+    - group: "networking.istio.io"
+      kind: VirtualService
+    - group: "networking.istio.io"
+      kind: DestinationRule
+    - group: "security.istio.io"
+      kind: PeerAuthentication
+
+  # --------------------------------------------------------------------------
+  # RBAC roles within this project
+  # --------------------------------------------------------------------------
+  roles:
+    - name: admin
+      description: Full admin access to the whatsapp-clone project
+      policies:
+        - "p, proj:whatsapp-clone:admin, applications, *, whatsapp-clone/*, allow"
+      groups:
+        - whatsapp-admins          # Map to your SSO group
+    - name: readonly
+      description: Read-only access (e.g. for developers)
+      policies:
+        - "p, proj:whatsapp-clone:readonly, applications, get, whatsapp-clone/*, allow"
+      groups:
+        - whatsapp-developers
+
+  # --------------------------------------------------------------------------
+  # Orphaned resource monitoring — warn if resources exist in the namespace
+  # that are not managed by ArgoCD
+  # --------------------------------------------------------------------------
+  orphanedResources:
+    warn: true

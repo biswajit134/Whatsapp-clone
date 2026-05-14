@@ -1,0 +1,27 @@
+{{- if .Values.istio.enabled }}
+# VirtualService for the backend (Socket.io + REST API).
+# Timeout is set to 0s (disabled) to support long-lived WebSocket connections.
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ include "backend.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  hosts:
+    - {{ include "backend.fullname" . }}
+  http:
+    - name: backend-http
+      timeout: {{ .Values.istio.virtualService.timeout }}
+      retries:
+        attempts: {{ .Values.istio.virtualService.retries.attempts }}
+        perTryTimeout: {{ .Values.istio.virtualService.retries.perTryTimeout }}
+        retryOn: {{ .Values.istio.virtualService.retries.retryOn | quote }}
+      route:
+        - destination:
+            host: {{ include "backend.fullname" . }}
+            port:
+              number: {{ .Values.service.port }}
+          weight: 100
+{{- end }}

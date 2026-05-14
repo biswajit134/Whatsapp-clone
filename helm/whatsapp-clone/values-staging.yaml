@@ -1,0 +1,77 @@
+# ==============================================================================
+# values-staging.yaml — Staging environment overrides
+# Production-like config but with lower resource limits and non-critical domain.
+# ==============================================================================
+
+global:
+  namespace: whatsapp-staging
+
+backend:
+  replicaCount: 2
+  image:
+    tag: "latest"
+  config:
+    nodeEnv: "production"
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb-staging"
+    frontendUrl: "http://staging.whatsapp.example.com"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+frontend:
+  replicaCount: 2
+  image:
+    tag: "latest"
+  service:
+    type: LoadBalancer
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+newsfeed:
+  replicaCount: 1
+  image:
+    tag: "latest"
+  config:
+    nodeEnv: "production"
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb-staging"
+
+status:
+  replicaCount: 1
+  image:
+    tag: "latest"
+  config:
+    nodeEnv: "production"
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb-staging"
+
+reels:
+  replicaCount: 1
+  image:
+    tag: "latest"
+  config:
+    nodeEnv: "production"
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb-staging"
+
+mongodb:
+  enabled: true
+  auth:
+    enabled: false
+  persistence:
+    size: 3Gi
+
+# Istio — STRICT mTLS in staging (mirrors production)
+istio:
+  enabled: true
+  gateway:
+    host: "staging.whatsapp.example.com"
+    httpsEnabled: false
+  mtls:
+    mode: STRICT

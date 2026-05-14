@@ -1,0 +1,64 @@
+# ==============================================================================
+# values-dev.yaml — Development environment overrides
+# Inherits all defaults from values.yaml; only override what differs in dev.
+# ==============================================================================
+
+global:
+  namespace: whatsapp-dev
+
+# Lower replica counts for dev — saves cluster resources
+backend:
+  replicaCount: 1
+  image:
+    tag: "latest"
+  config:
+    nodeEnv: "development"
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb-dev"
+    frontendUrl: "http://localhost:3000"
+
+frontend:
+  replicaCount: 1
+  image:
+    tag: "latest"
+  service:
+    type: LoadBalancer
+
+newsfeed:
+  replicaCount: 1
+  image:
+    tag: "latest"
+  config:
+    nodeEnv: "development"
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb-dev"
+
+status:
+  replicaCount: 1
+  image:
+    tag: "latest"
+  config:
+    nodeEnv: "development"
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb-dev"
+
+reels:
+  replicaCount: 1
+  image:
+    tag: "latest"
+  config:
+    nodeEnv: "development"
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb-dev"
+
+mongodb:
+  enabled: true
+  auth:
+    enabled: false
+  persistence:
+    size: 2Gi     # smaller disk for dev
+
+# Istio — use PERMISSIVE in dev for easier debugging
+istio:
+  enabled: true
+  gateway:
+    host: "*"
+    httpsEnabled: false
+  mtls:
+    mode: PERMISSIVE

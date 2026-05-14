@@ -1,0 +1,13 @@
+{{- if .Values.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "status.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "status.labels" . | nindent 4 }}
+data:
+  PORT: {{ .Values.config.port | quote }}
+  NODE_ENV: {{ .Values.config.nodeEnv | quote }}
+  MONGO_URI: {{ .Values.config.mongoUri | quote }}
+{{- end }}

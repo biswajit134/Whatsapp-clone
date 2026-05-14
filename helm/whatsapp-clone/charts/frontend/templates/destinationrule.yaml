@@ -1,0 +1,26 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ include "frontend.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "frontend.labels" . | nindent 4 }}
+spec:
+  host: {{ include "frontend.fullname" . }}
+  trafficPolicy:
+    tls:
+      mode: {{ .Values.istio.destinationRule.trafficPolicy.tls.mode }}
+    connectionPool:
+      tcp:
+        maxConnections: {{ .Values.istio.destinationRule.trafficPolicy.connectionPool.tcp.maxConnections }}
+      http:
+        http1MaxPendingRequests: {{ .Values.istio.destinationRule.trafficPolicy.connectionPool.http.http1MaxPendingRequests }}
+        http2MaxRequests: {{ .Values.istio.destinationRule.trafficPolicy.connectionPool.http.http2MaxRequests }}
+        idleTimeout: {{ .Values.istio.destinationRule.trafficPolicy.connectionPool.http.idleTimeout }}
+    outlierDetection:
+      consecutive5xxErrors: {{ .Values.istio.destinationRule.trafficPolicy.outlierDetection.consecutive5xxErrors }}
+      interval: {{ .Values.istio.destinationRule.trafficPolicy.outlierDetection.interval }}
+      baseEjectionTime: {{ .Values.istio.destinationRule.trafficPolicy.outlierDetection.baseEjectionTime }}
+      maxEjectionPercent: {{ .Values.istio.destinationRule.trafficPolicy.outlierDetection.maxEjectionPercent }}
+{{- end }}

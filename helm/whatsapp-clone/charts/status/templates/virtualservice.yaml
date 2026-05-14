@@ -1,0 +1,25 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ include "status.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "status.labels" . | nindent 4 }}
+spec:
+  hosts:
+    - {{ include "status.fullname" . }}
+  http:
+    - name: status-http
+      timeout: {{ .Values.istio.virtualService.timeout }}
+      retries:
+        attempts: {{ .Values.istio.virtualService.retries.attempts }}
+        perTryTimeout: {{ .Values.istio.virtualService.retries.perTryTimeout }}
+        retryOn: {{ .Values.istio.virtualService.retries.retryOn | quote }}
+      route:
+        - destination:
+            host: {{ include "status.fullname" . }}
+            port:
+              number: {{ .Values.service.port }}
+          weight: 100
+{{- end }}

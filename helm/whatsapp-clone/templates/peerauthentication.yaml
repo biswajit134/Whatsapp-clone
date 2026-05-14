@@ -1,0 +1,16 @@
+{{- if .Values.istio.enabled }}
+# Namespace-wide PeerAuthentication — enforces mTLS for ALL services in the whatsapp namespace.
+# Individual services can override with their own PeerAuthentication resources.
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: {{ .Release.Name }}-default-mtls
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  # No selector → applies to ALL workloads in the namespace
+  mtls:
+    mode: {{ .Values.istio.mtls.mode }}
+{{- end }}

@@ -1,0 +1,25 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ include "reels.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "reels.labels" . | nindent 4 }}
+spec:
+  hosts:
+    - {{ include "reels.fullname" . }}
+  http:
+    - name: reels-http
+      timeout: {{ .Values.istio.virtualService.timeout }}
+      retries:
+        attempts: {{ .Values.istio.virtualService.retries.attempts }}
+        perTryTimeout: {{ .Values.istio.virtualService.retries.perTryTimeout }}
+        retryOn: {{ .Values.istio.virtualService.retries.retryOn | quote }}
+      route:
+        - destination:
+            host: {{ include "reels.fullname" . }}
+            port:
+              number: {{ .Values.service.port }}
+          weight: 100
+{{- end }}

@@ -1,0 +1,213 @@
+# ==============================================================================
+# WhatsApp-Clone — Umbrella chart default values
+# Override any subchart value by nesting under its chart name key.
+# ==============================================================================
+
+# ---------------------------------------------------------------------------
+# Global values — automatically available to all subcharts as .Values.global
+# ---------------------------------------------------------------------------
+global:
+  namespace: whatsapp     # All resources are deployed into this namespace
+                          # Pass --namespace whatsapp at install time:
+                          #   helm install whatsapp-clone . --namespace whatsapp --create-namespace
+
+# ---------------------------------------------------------------------------
+# Istio Service Mesh — global settings
+# ---------------------------------------------------------------------------
+istio:
+  enabled: true
+
+  # IngressGateway — entry point for external traffic
+  gateway:
+    host: "*"               # Wildcard, or set to your domain: "app.example.com"
+    httpsEnabled: false     # Set true and provide tlsSecret to enable HTTPS
+    httpsRedirect: false    # Redirect HTTP → HTTPS (requires httpsEnabled: true)
+    tlsSecret: ""           # Name of the K8s TLS Secret (type: kubernetes.io/tls)
+
+  # Namespace-wide PeerAuthentication policy
+  mtls:
+    mode: STRICT            # STRICT (mTLS only) | PERMISSIVE (mTLS + plaintext)
+
+# ---------------------------------------------------------------------------
+# Image pull secret for GHCR (set if packages are private)
+# ---------------------------------------------------------------------------
+imagePullSecrets: []
+# - name: ghcr-secret
+
+# ---------------------------------------------------------------------------
+# MongoDB (Bitnami sub-chart)
+# https://artifacthub.io/packages/helm/bitnami/mongodb
+# ---------------------------------------------------------------------------
+mongodb:
+  enabled: true
+  auth:
+    enabled: false          # No auth – matches docker-compose behaviour
+  persistence:
+    enabled: true
+    size: 5Gi
+  service:
+    ports:
+      mongodb: 27017
+
+# ---------------------------------------------------------------------------
+# Backend service overrides
+# ---------------------------------------------------------------------------
+backend:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/biswajit134/whatsapp-devops/backend
+    tag: "latest"
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 9000
+  config:
+    port: "9000"
+    nodeEnv: "production"
+    # Service-name based MongoDB URI (mongodb sub-chart fullname)
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb"
+    frontendUrl: "http://localhost"
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: api.whatsapp.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+  resources: {}
+
+# ---------------------------------------------------------------------------
+# Frontend service overrides
+# ---------------------------------------------------------------------------
+frontend:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/biswajit134/whatsapp-devops/frontend
+    tag: "latest"
+    pullPolicy: Always
+  service:
+    type: LoadBalancer    # Expose via LB; use ClusterIP + Ingress in production
+    port: 80
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: whatsapp.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+  resources: {}
+
+# ---------------------------------------------------------------------------
+# Newsfeed service overrides
+# ---------------------------------------------------------------------------
+newsfeed:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/biswajit134/whatsapp-devops/newsfeed
+    tag: "latest"
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 9001
+  config:
+    port: "9001"
+    nodeEnv: "production"
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb"
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: newsfeed.whatsapp.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+  resources: {}
+
+# ---------------------------------------------------------------------------
+# Status service overrides
+# ---------------------------------------------------------------------------
+status:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/biswajit134/whatsapp-devops/status
+    tag: "latest"
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 9002
+  config:
+    port: "9002"
+    nodeEnv: "production"
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb"
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: status.whatsapp.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+  resources: {}
+
+# ---------------------------------------------------------------------------
+# Reels service overrides
+# ---------------------------------------------------------------------------
+reels:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/biswajit134/whatsapp-devops/reels
+    tag: "latest"
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 9003
+  config:
+    port: "9003"
+    nodeEnv: "production"
+    mongoUri: "mongodb://whatsapp-clone-mongodb:27017/whatsappdb"
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: reels.whatsapp.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+  resources: {}

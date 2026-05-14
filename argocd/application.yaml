@@ -1,0 +1,106 @@
+##############################################################################
+# ArgoCD Application — whatsapp-clone (production)
+#
+# Deploys the umbrella Helm chart to the 'whatsapp' namespace.
+# Apply with:  kubectl apply -f argocd/application.yaml -n argocd
+##############################################################################
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: whatsapp-clone
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: whatsapp-clone
+    app.kubernetes.io/part-of: whatsapp-clone
+    environment: production
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+
+    # ── Argo CD Image Updater (optional, requires image-updater addon) ────────
+    # Uncomment to automatically update images when a new tag is pushed to GHCR.
+    #
+    # argocd-image-updater.argoproj.io/image-list: >
+    #   backend=ghcr.io/biswajit134/whatsapp-devops/backend,
+    #   frontend=ghcr.io/biswajit134/whatsapp-devops/frontend,
+    #   newsfeed=ghcr.io/biswajit134/whatsapp-devops/newsfeed,
+    #   reels=ghcr.io/biswajit134/whatsapp-devops/reels,
+    #   status=ghcr.io/biswajit134/whatsapp-devops/status
+    # argocd-image-updater.argoproj.io/backend.update-strategy: latest
+    # argocd-image-updater.argoproj.io/frontend.update-strategy: latest
+    # argocd-image-updater.argoproj.io/newsfeed.update-strategy: latest
+    # argocd-image-updater.argoproj.io/reels.update-strategy: latest
+    # argocd-image-updater.argoproj.io/status.update-strategy: latest
+    # argocd-image-updater.argoproj.io/write-back-method: git
+
+  # Cascade-delete all managed resources when the Application is deleted
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+
+spec:
+  # Bind to the AppProject defined in project.yaml
+  project: whatsapp-clone
+
+  # --------------------------------------------------------------------------
+  # Source — umbrella Helm chart inside the Git repository
+  # --------------------------------------------------------------------------
+  source:
+    repoURL: "https://github.com/biswajit134/Whatsapp-clone"
+    targetRevision: HEAD          # track the default branch; change to a tag for pinned deploys
+    path: helm/whatsapp-clone     # path to the chart within the repo
+
+    helm:
+      releaseName: whatsapp-clone
+      # ArgoCD runs 'helm dependency build' automatically when Chart.lock exists.
+      # Run 'helm dependency update ./helm/whatsapp-clone' locally and commit
+      # the generated Chart.lock (NOT the charts/ directory itself).
+      valueFiles:
+        - values.yaml             # base values
+
+      # Inline value overrides (takes precedence over valueFiles)
+      # values: |
+      #   backend:
+      #     replicaCount: 2
+
+  # --------------------------------------------------------------------------
+  # Destination — production namespace on the in-cluster API server
+  # --------------------------------------------------------------------------
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: whatsapp
+
+  # --------------------------------------------------------------------------
+  # Sync policy — fully automated GitOps
+  # --------------------------------------------------------------------------
+  syncPolicy:
+    automated:
+      prune: true        # remove resources deleted from Git
+      selfHeal: true     # revert manual cluster changes
+
+    syncOptions:
+      - CreateNamespace=true      # create 'whatsapp' ns if it doesn't exist
+      - ServerSideApply=true      # use SSA to handle large CRD objects cleanly
+      - RespectIgnoreDifferences=true
+      - ApplyOutOfSyncOnly=true   # only sync resources that are out of sync
+
+    retry:
+      limit: 5
+      backoff:
+        duration: "10s"
+        factor: 2
+        maxDuration: "5m"
+
+  # --------------------------------------------------------------------------
+  # Ignore differences — prevent ArgoCD from flagging expected live-state drift
+  # --------------------------------------------------------------------------
+  ignoreDifferences:
+    # Kubernetes adds a default token volume to ServiceAccounts at runtime
+    - group: ""
+      kind: ServiceAccount
+      jsonPointers:
+        - /secrets
+    # Istio mutates the service spec at runtime
+    - group: ""
+      kind: Service
+      jsonPointers:
+        - /spec/clusterIP
+        - /spec/clusterIPs

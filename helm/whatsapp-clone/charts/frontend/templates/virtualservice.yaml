@@ -1,0 +1,31 @@
+{{- if .Values.istio.enabled }}
+# VirtualService for the frontend.
+# Linked to the Istio IngressGateway so external traffic reaches the Nginx pod.
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ include "frontend.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "frontend.labels" . | nindent 4 }}
+spec:
+  hosts:
+    - {{ .Values.istio.virtualService.externalHost | default "*" | quote }}
+    - {{ include "frontend.fullname" . }}
+  gateways:
+    - {{ .Release.Name }}-gateway   # external traffic via IngressGateway
+    - mesh                          # internal mesh traffic
+  http:
+    - name: frontend-http
+      timeout: {{ .Values.istio.virtualService.timeout }}
+      retries:
+        attempts: {{ .Values.istio.virtualService.retries.attempts }}
+        perTryTimeout: {{ .Values.istio.virtualService.retries.perTryTimeout }}
+        retryOn: {{ .Values.istio.virtualService.retries.retryOn | quote }}
+      route:
+        - destination:
+            host: {{ include "frontend.fullname" . }}
+            port:
+              number: {{ .Values.service.port }}
+          weight: 100
+{{- end }}

@@ -1,0 +1,33 @@
+WhatsApp Clone has been deployed successfully!
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+Services deployed:
+  - backend   (port 9000)  → ClusterIP
+  - frontend  (port 80)    → {{ .Values.frontend.service.type }}
+  - newsfeed  (port 9001)  → ClusterIP
+  - status    (port 9002)  → ClusterIP
+  - reels     (port 9003)  → ClusterIP
+  - MongoDB               → ClusterIP (internal)
+
+{{- if eq .Values.frontend.service.type "LoadBalancer" }}
+
+Get the frontend URL:
+  kubectl get svc --namespace {{ .Release.Namespace }} -w {{ .Release.Name }}-frontend
+{{- else if .Values.frontend.ingress.enabled }}
+
+Frontend is available at:
+  {{- range .Values.frontend.ingress.hosts }}
+  http{{ if $.Values.frontend.ingress.tls }}s{{ end }}://{{ .host }}
+  {{- end }}
+{{- end }}
+
+To check pod status:
+  kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/instance={{ .Release.Name }}"
+
+To view logs (example – backend):
+  kubectl logs --namespace {{ .Release.Namespace }} -l app.kubernetes.io/name=backend -f
+
+Upgrade the release:
+  helm upgrade {{ .Release.Name }} ./helm/whatsapp-clone -f ./helm/whatsapp-clone/values.yaml
