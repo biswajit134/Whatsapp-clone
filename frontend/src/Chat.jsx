@@ -216,62 +216,87 @@ function Chat({ user, onlineUsers }) {
       )}
 
       <div className="chat__header">
+        {/* Avatar */}
         {isGroup ? (
-          <div style={{ width: 45, height: 45, borderRadius: '50%', backgroundColor: '#25D366', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white' }}>
-            <span className="material-icons">groups</span>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #25D366, #128C7E)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', flexShrink: 0 }}>
+            <span className="material-icons" style={{ fontSize: 22 }}>groups</span>
           </div>
         ) : otherUser?.profilePic ? (
-          <img src={otherUser.profilePic} alt="profile" style={{ width: 45, height: 45, borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }} onClick={() => setViewingProfilePic(otherUser.profilePic)} title="View Profile Picture" />
+          <img
+            src={otherUser.profilePic}
+            alt="profile"
+            className="chat__header-avatar"
+            onClick={() => setViewingProfilePic(otherUser.profilePic)}
+            title="View Profile Picture"
+          />
         ) : (
-          <span className="material-icons avatar">account_circle</span>
+          <span className="material-icons chat__header-avatar-icon">account_circle</span>
         )}
+
         <div className="chat__headerInfo">
           <h3>{isGroup ? groupName : (otherUser?.name || 'Loading...')}</h3>
-          <p style={{color: isGroup ? 'gray' : (onlineUsers.includes(otherUserId) ? '#25D366' : 'gray'), fontWeight: 500}}>
+          <p>
+            {!isGroup && onlineUsers.includes(otherUserId) && <span className="chat__online-dot" />}
             {isGroup ? 'Group Chat' : (onlineUsers.includes(otherUserId) ? 'Online' : 'Offline')}
           </p>
         </div>
+
         <div className="chat__headerRight">
-          <span className="material-icons" onClick={startVideoCall} style={{cursor: 'pointer', marginRight: '15px'}} title="Video Call">videocam</span>
-          <span className="material-icons" onClick={startAudioCall} style={{cursor: 'pointer'}} title="Audio Call">call</span>
-          <span className="material-icons">search</span>
-          <span className="material-icons">more_vert</span>
+          <div className="chat__header-btn" onClick={startVideoCall} title="Video Call">
+            <span className="material-icons">videocam</span>
+          </div>
+          <div className="chat__header-btn" onClick={startAudioCall} title="Audio Call">
+            <span className="material-icons">call</span>
+          </div>
+          <div className="chat__header-btn" title="Search">
+            <span className="material-icons">search</span>
+          </div>
+          <div className="chat__header-btn" title="More options">
+            <span className="material-icons">more_vert</span>
+          </div>
         </div>
       </div>
 
       <div className="chat__body">
-        {messages.map((message, i) => (
-          <p key={i} className={`chat__message ${message.name === user?.user?.name ? 'chat__receiver' : ''}`}>
-            <span className="chat__name">{message.name}</span>
-            {message.messageType === 'audio' || message.messageType === 'audio_file' ? (
-              <audio controls src={message.message} style={{ maxWidth: '250px', marginTop: '10px', display: 'block' }} />
-            ) : message.messageType === 'image' ? (
-              <img src={message.message} alt="shared media" style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '10px', marginTop: '5px', display: 'block' }} />
-            ) : (
-              message.message
-            )}
-            <span className="chat__timestamp" style={{ display: 'inline-flex', alignItems: 'center', marginTop: message.messageType !== 'text' && message.messageType ? '5px' : '0' }}>
-              {message.timestamp}
-              {message.name === user?.user?.name && (
-                <span className="material-icons" style={{ fontSize: '15px', marginLeft: '4px', color: message.seen ? '#34B7F1' : 'gray' }}>
-                  done_all
-                </span>
+        {messages.map((message, i) => {
+          const isMine = message.name === user?.user?.name;
+          return (
+            <p key={i} className={`chat__message ${isMine ? 'chat__receiver' : ''}`}>
+              {!isMine && <span className="chat__name">{message.name}</span>}
+              {message.messageType === 'audio' || message.messageType === 'audio_file' ? (
+                <audio controls src={message.message} />
+              ) : message.messageType === 'image' ? (
+                <img src={message.message} alt="shared media" onClick={() => setViewingProfilePic(message.message)} style={{ cursor: 'pointer' }} />
+              ) : (
+                message.message
               )}
-            </span>
-          </p>
-        ))}
+              <span className="chat__timestamp">
+                {message.timestamp}
+                {isMine && (
+                  <span className="material-icons" style={{ fontSize: '14px', color: message.seen ? '#34B7F1' : 'var(--text-muted)' }}>
+                    done_all
+                  </span>
+                )}
+              </span>
+            </p>
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 
       <div className="chat__footer">
         <span className="material-icons chat__footer-icon">insert_emoticon</span>
-        <span className="material-icons chat__footer-icon" onClick={() => fileInputRef.current.click()} title="Attach File">attach_file</span>
-        <input 
-          type="file" 
-          accept="image/*,audio/*" 
-          ref={fileInputRef} 
-          style={{ display: 'none' }} 
-          onChange={handleFileSelect} 
+        <span
+          className="material-icons chat__footer-icon"
+          onClick={() => fileInputRef.current.click()}
+          title="Attach File"
+        >attach_file</span>
+        <input
+          type="file"
+          accept="image/*,audio/*"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileSelect}
         />
 
         {isRecording ? (
@@ -290,19 +315,24 @@ function Chat({ user, onlineUsers }) {
           </form>
         )}
 
+        {/* Always-visible action button */}
         {isRecording ? (
           <button className="chat__send-btn chat__send-btn--stop" onClick={stopRecording} title="Stop & Send">
             <span className="material-icons">stop</span>
           </button>
-        ) : input.trim().length > 0 ? (
-          <button className="chat__send-btn" onClick={sendMessage} title="Send Message">
-            <svg viewBox="0 0 24 24" fill="white" width="22" height="22">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-            </svg>
-          </button>
         ) : (
-          <button className="chat__send-btn chat__send-btn--mic" onClick={startRecording} title="Record Audio">
-            <span className="material-icons">mic</span>
+          <button
+            className={`chat__send-btn ${input.trim().length === 0 ? 'chat__send-btn--mic' : ''}`}
+            onClick={input.trim().length > 0 ? sendMessage : startRecording}
+            title={input.trim().length > 0 ? 'Send Message' : 'Record Audio'}
+          >
+            {input.trim().length > 0 ? (
+              <svg viewBox="0 0 24 24" fill="white" width="22" height="22">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            ) : (
+              <span className="material-icons">mic</span>
+            )}
           </button>
         )}
       </div>
