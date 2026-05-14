@@ -285,7 +285,8 @@ function Chat({ user, onlineUsers }) {
       </div>
 
       <div className="chat__footer">
-        <span className="material-icons chat__footer-icon">insert_emoticon</span>
+        {/* Left icons */}
+        <span className="material-icons chat__footer-icon" title="Emoji">insert_emoticon</span>
         <span
           className="material-icons chat__footer-icon"
           onClick={() => fileInputRef.current.click()}
@@ -299,6 +300,7 @@ function Chat({ user, onlineUsers }) {
           onChange={handleFileSelect}
         />
 
+        {/* Input area */}
         {isRecording ? (
           <div className="chat__recording-indicator">
             <span className="material-icons" style={{ animation: 'pulse 1.5s infinite', color: '#ef5350' }}>mic</span>
@@ -311,31 +313,40 @@ function Chat({ user, onlineUsers }) {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type a message"
               type="text"
+              autoComplete="off"
             />
           </form>
         )}
 
-        {/* Always-visible action button */}
+        {/* Right buttons */}
         {isRecording ? (
-          <button className="chat__send-btn chat__send-btn--stop" onClick={stopRecording} title="Stop & Send">
+          /* Stop recording */
+          <button className="chat__send-btn chat__send-btn--stop" onClick={stopRecording} title="Stop & Send Audio">
             <span className="material-icons">stop</span>
           </button>
         ) : (
-          <button
-            className={`chat__send-btn ${input.trim().length === 0 ? 'chat__send-btn--mic' : ''}`}
-            onClick={input.trim().length > 0 ? sendMessage : startRecording}
-            title={input.trim().length > 0 ? 'Send Message' : 'Record Audio'}
-          >
-            {input.trim().length > 0 ? (
-              <svg viewBox="0 0 24 24" fill="white" width="22" height="22">
+          <div className="chat__footer-right">
+            {/* Mic button — visible when input is empty */}
+            {input.trim().length === 0 && (
+              <button className="chat__mic-btn" onClick={startRecording} title="Record Audio">
+                <span className="material-icons">mic</span>
+              </button>
+            )}
+            {/* Send button — always visible, disabled when empty */}
+            <button
+              className={`chat__send-btn ${input.trim().length === 0 ? 'chat__send-btn--disabled' : ''}`}
+              onClick={sendMessage}
+              disabled={input.trim().length === 0}
+              title="Send Message"
+            >
+              <svg viewBox="0 0 24 24" fill="white" width="20" height="20">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
               </svg>
-            ) : (
-              <span className="material-icons">mic</span>
-            )}
-          </button>
+            </button>
+          </div>
         )}
       </div>
+
     </div>
   );
 }
