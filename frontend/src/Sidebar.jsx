@@ -76,11 +76,20 @@ function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme }) {
     <div className="sidebar">
       <div className="sidebar__header">
         <div className="sidebar__headerLeft" style={{display: 'flex', alignItems: 'center'}}>
-          {user?.user?.profilePic ? (
-             <img src={user.user.profilePic} alt="profile" style={{ width: 40, height: 40, borderRadius: '50%', marginRight: 10, cursor: 'pointer', objectFit: 'cover' }} onClick={() => profilePicRef.current.click()} title="Change Profile Picture" />
-          ) : (
-             <span className="material-icons avatar" style={{marginRight: '10px', cursor: 'pointer'}} onClick={() => profilePicRef.current.click()} title="Change Profile Picture">account_circle</span>
-          )}
+          <div style={{ position: 'relative', display: 'inline-block', marginRight: 10 }}>
+            {user?.user?.profilePic ? (
+               <img src={user.user.profilePic} alt="profile" style={{ width: 40, height: 40, borderRadius: '50%', cursor: 'pointer', objectFit: 'cover' }} onClick={() => profilePicRef.current.click()} title="Change Profile Picture" />
+            ) : (
+               <span className="material-icons avatar" style={{ cursor: 'pointer', fontSize: 40 }} onClick={() => profilePicRef.current.click()} title="Change Profile Picture">account_circle</span>
+            )}
+            <div 
+              style={{ position: 'absolute', bottom: -2, right: -2, backgroundColor: 'var(--bg-header)', borderRadius: '50%', width: 16, height: 16, display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', cursor: 'pointer' }}
+              onClick={() => profilePicRef.current.click()}
+              title="Change Profile Picture"
+            >
+              <span className="material-icons" style={{ fontSize: 11, color: 'var(--text-primary)' }}>camera_alt</span>
+            </div>
+          </div>
           <input type="file" accept="image/*" ref={profilePicRef} style={{ display: 'none' }} onChange={handleProfilePicChange} />
           <span style={{fontWeight: 600, color: 'var(--text-primary)', fontSize: '16px'}}>{user?.user?.name}</span>
         </div>

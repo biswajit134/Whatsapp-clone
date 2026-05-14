@@ -202,7 +202,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
 
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, profilePic } = req.body;
     
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ error: "User already exists" });
@@ -211,7 +211,7 @@ app.post('/api/auth/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = await User.create({
-      name, email, password: hashedPassword, phone
+      name, email, password: hashedPassword, phone, profilePic
     });
 
     const userObj = {

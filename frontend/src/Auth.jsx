@@ -8,12 +8,29 @@ function Auth({ setUser }) {
     name: '',
     email: '',
     password: '',
-    phone: ''
+    phone: '',
+    profilePic: ''
   });
   const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleProfilePicSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image is too large! Maximum 5MB allowed.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = () => {
+      setFormData({ ...formData, profilePic: reader.result });
+    };
   };
 
   const handleSubmit = async (e) => {
@@ -54,6 +71,23 @@ function Auth({ setUser }) {
             />
           )}
           
+          {!isLogin && (
+            <div className="auth__fileInput" style={{ display: 'flex', alignItems: 'center', margin: '10px 0' }}>
+              <label htmlFor="profilePic" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', backgroundColor: '#e0e0e0', padding: '8px 12px', borderRadius: '4px', fontSize: '14px', color: '#333' }}>
+                <span className="material-icons" style={{ marginRight: '5px', fontSize: '18px' }}>add_a_photo</span>
+                Upload Profile Picture (Optional)
+              </label>
+              <input 
+                type="file" 
+                id="profilePic"
+                accept="image/*"
+                onChange={handleProfilePicSelect}
+                style={{ display: 'none' }}
+              />
+              {formData.profilePic && <img src={formData.profilePic} alt="Preview" style={{ width: 40, height: 40, borderRadius: '50%', marginLeft: '10px', objectFit: 'cover' }} />}
+            </div>
+          )}
+
           <input 
             type="email" 
             name="email" 
