@@ -36,14 +36,30 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        # This gets baked into the React frontend during the Docker build process.
-        # It needs to be the URL that the browser uses to access the backend API.
         - VITE_API_URL=http://localhost:9000
+        - VITE_NEWSFEED_API_URL=http://localhost:9001
     container_name: whatsapp_frontend
     ports:
       - "80:80"
     depends_on:
       - backend
+      - newsfeed
+    restart: unless-stopped
+
+  # Newsfeed Microservice
+  newsfeed:
+    build:
+      context: ./newsfeed
+      dockerfile: Dockerfile
+    container_name: whatsapp_newsfeed
+    ports:
+      - "9001:9001"
+    environment:
+      - PORT=9001
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/whatsappdb
+    depends_on:
+      - mongo
     restart: unless-stopped
 
 # Persistent volume for the database

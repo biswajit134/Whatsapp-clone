@@ -12,6 +12,7 @@ function Auth({ setUser }) {
     profilePic: ''
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,6 +37,7 @@ function Auth({ setUser }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
@@ -47,84 +49,144 @@ function Auth({ setUser }) {
     } catch (err) {
       console.error("Auth Error:", err);
       setError(err.response?.data?.error || err.message || 'Authentication failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="auth">
-      <div className="auth__container">
-        <div className="auth__text">
-          <h1>{isLogin ? 'Sign in to WhatsApp' : 'Create an Account'}</h1>
+    <div className="auth-wrapper">
+      <div className="auth-container">
+        {/* Left Side: Hero Image */}
+        <div className="auth-hero">
+          <div className="auth-hero-overlay">
+            <div className="auth-hero-content">
+              <span className="material-icons hero-icon">chat_bubble_outline</span>
+              <h2>Welcome to Connect</h2>
+              <p>Experience fast, simple, and secure messaging across all your devices.</p>
+            </div>
+          </div>
         </div>
-        
-        {error && <p className="auth__error">{error}</p>}
-        
-        <form onSubmit={handleSubmit} className="auth__form">
-          {!isLogin && (
-            <input 
-              type="text" 
-              name="name" 
-              placeholder="Full Name" 
-              value={formData.name}
-              onChange={handleChange}
-              required 
-            />
-          )}
+
+        {/* Right Side: Form */}
+        <div className="auth-form-container">
+          <div className="auth-header">
+            <h1>{isLogin ? 'Sign in to your account' : 'Create an account'}</h1>
+            <p className="auth-subtitle">
+              {isLogin ? 'Welcome back! Please enter your details.' : 'Join us to start messaging!'}
+            </p>
+          </div>
           
-          {!isLogin && (
-            <div className="auth__fileInput" style={{ display: 'flex', alignItems: 'center', margin: '10px 0' }}>
-              <label htmlFor="profilePic" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', backgroundColor: '#e0e0e0', padding: '8px 12px', borderRadius: '4px', fontSize: '14px', color: '#333' }}>
-                <span className="material-icons" style={{ marginRight: '5px', fontSize: '18px' }}>add_a_photo</span>
-                Upload Profile Picture (Optional)
-              </label>
-              <input 
-                type="file" 
-                id="profilePic"
-                accept="image/*"
-                onChange={handleProfilePicSelect}
-                style={{ display: 'none' }}
-              />
-              {formData.profilePic && <img src={formData.profilePic} alt="Preview" style={{ width: 40, height: 40, borderRadius: '50%', marginLeft: '10px', objectFit: 'cover' }} />}
+          {error && (
+            <div className="auth-error-box">
+              <span className="material-icons">error_outline</span>
+              <p>{error}</p>
             </div>
           )}
+          
+          <form onSubmit={handleSubmit} className="auth-form">
+            {!isLogin && (
+              <div className="form-group">
+                <label>Full Name</label>
+                <div className="input-wrapper">
+                  <span className="material-icons input-icon">person_outline</span>
+                  <input 
+                    type="text" 
+                    name="name" 
+                    placeholder="e.g. Jane Doe" 
+                    value={formData.name}
+                    onChange={handleChange}
+                    required 
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="form-group">
+              <label>Email Address</label>
+              <div className="input-wrapper">
+                <span className="material-icons input-icon">mail_outline</span>
+                <input 
+                  type="email" 
+                  name="email" 
+                  placeholder="e.g. jane@example.com" 
+                  value={formData.email}
+                  onChange={handleChange}
+                  required 
+                />
+              </div>
+            </div>
+            
+            {!isLogin && (
+              <div className="form-group">
+                <label>Phone Number</label>
+                <div className="input-wrapper">
+                  <span className="material-icons input-icon">phone_iphone</span>
+                  <input 
+                    type="tel" 
+                    name="phone" 
+                    placeholder="e.g. +1 234 567 890" 
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required 
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="form-group">
+              <label>Password</label>
+              <div className="input-wrapper">
+                <span className="material-icons input-icon">lock_outline</span>
+                <input 
+                  type="password" 
+                  name="password" 
+                  placeholder="••••••••" 
+                  value={formData.password}
+                  onChange={handleChange}
+                  required 
+                />
+              </div>
+            </div>
 
-          <input 
-            type="email" 
-            name="email" 
-            placeholder="Email Address" 
-            value={formData.email}
-            onChange={handleChange}
-            required 
-          />
-          
-          {!isLogin && (
-            <input 
-              type="tel" 
-              name="phone" 
-              placeholder="Phone Number" 
-              value={formData.phone}
-              onChange={handleChange}
-              required 
-            />
-          )}
-          
-          <input 
-            type="password" 
-            name="password" 
-            placeholder="Password" 
-            value={formData.password}
-            onChange={handleChange}
-            required 
-          />
-          
-          <button type="submit">
-            {isLogin ? 'Sign In' : 'Sign Up'}
-          </button>
-        </form>
+            {!isLogin && (
+              <div className="form-group dp-upload-group">
+                <label>Profile Picture</label>
+                <div className="dp-upload-wrapper">
+                  <input 
+                    type="file" 
+                    id="profilePic"
+                    accept="image/*"
+                    onChange={handleProfilePicSelect}
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="profilePic" className="dp-upload-btn">
+                    <span className="material-icons">cloud_upload</span>
+                    <span>Choose file...</span>
+                  </label>
+                  {formData.profilePic ? (
+                    <img src={formData.profilePic} alt="Preview" className="dp-preview" />
+                  ) : (
+                    <span className="dp-placeholder">No file chosen</span>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            <button type="submit" className={`auth-submit-btn ${isLoading ? 'loading' : ''}`} disabled={isLoading}>
+              {isLoading ? <span className="loader"></span> : isLogin ? 'Sign In' : 'Sign Up'}
+            </button>
+          </form>
 
-        <p className="auth__toggle" onClick={() => setIsLogin(!isLogin)}>
-          {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
-        </p>
+          <div className="auth-footer">
+            <p>
+              {isLogin ? "Don't have an account?" : "Already have an account?"}
+              <button className="toggle-btn" onClick={() => setIsLogin(!isLogin)} type="button">
+                {isLogin ? "Sign up" : "Sign in"}
+              </button>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
