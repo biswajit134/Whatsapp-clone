@@ -102,16 +102,6 @@ function Newsfeed({ user }) {
 
   return (
     <div className="newsfeed-container">
-      <div className="newsfeed-header">
-        <div className="newsfeed-header-inner">
-          <span className="material-icons nf-header-icon">dynamic_feed</span>
-          <div>
-            <h2>Newsfeed</h2>
-            <p className="nf-header-sub">{posts.length} posts from your network</p>
-          </div>
-        </div>
-      </div>
-
       <div className="newsfeed-content">
         {/* Create Post */}
         <div className="create-post-card">

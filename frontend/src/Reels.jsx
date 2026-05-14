@@ -356,6 +356,13 @@ export default function Reels({ user }) {
 
   useEffect(() => { fetchReels(); }, []);
 
+  // MediaSidebar "Create Reel" button triggers this event
+  useEffect(() => {
+    const handler = () => setShowUpload(true);
+    window.addEventListener('open_reel_upload', handler);
+    return () => window.removeEventListener('open_reel_upload', handler);
+  }, []);
+
   // Intersection observer – update active reel on scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -406,18 +413,6 @@ export default function Reels({ user }) {
 
   return (
     <div className="reels-page">
-      {/* Header */}
-      <div className="reels-header">
-        <div className="reels-header-left">
-          <span className="material-icons reels-header-icon">theaters</span>
-          <h2>Reels</h2>
-        </div>
-        <button className="reels-create-btn" onClick={() => setShowUpload(true)}>
-          <span className="material-icons">add_circle</span>
-          <span>Create</span>
-        </button>
-      </div>
-
       {/* Feed */}
       <div className="reels-feed" ref={containerRef}>
         {loading ? (
