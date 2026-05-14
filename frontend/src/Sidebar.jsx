@@ -161,44 +161,35 @@ function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme }) {
   return (
     <div className="sidebar">
       <div className="sidebar__header">
-        <div className="sidebar__headerLeft" style={{display: 'flex', alignItems: 'center'}}>
-          <div style={{ position: 'relative', display: 'inline-block', marginRight: 10 }}>
+        <div className="sidebar__headerLeft">
+
+          {/* Avatar */}
+          <div className="sidebar__avatar-wrap" onClick={() => profilePicRef.current.click()} title="Change Profile Picture">
             {user?.user?.profilePic ? (
-               <img src={user.user.profilePic} alt="profile" style={{ width: 40, height: 40, borderRadius: '50%', cursor: 'pointer', objectFit: 'cover' }} onClick={() => profilePicRef.current.click()} title="Change Profile Picture" />
+              <img src={user.user.profilePic} alt="profile" className="sidebar__avatar-img" />
             ) : (
-               <span className="material-icons avatar" style={{ cursor: 'pointer', fontSize: 40 }} onClick={() => profilePicRef.current.click()} title="Change Profile Picture">account_circle</span>
+              <span className="material-icons sidebar__avatar-icon">account_circle</span>
             )}
-            <div 
-              style={{ position: 'absolute', bottom: -2, right: -2, backgroundColor: 'var(--bg-header)', borderRadius: '50%', width: 16, height: 16, display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', cursor: 'pointer' }}
-              onClick={() => profilePicRef.current.click()}
-              title="Change Profile Picture"
-            >
-              <span className="material-icons" style={{ fontSize: 11, color: 'var(--text-primary)' }}>camera_alt</span>
+            <div className="sidebar__avatar-edit">
+              <span className="material-icons">camera_alt</span>
             </div>
           </div>
           <input type="file" accept="image/*" ref={profilePicRef} style={{ display: 'none' }} onChange={handleProfilePicChange} />
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-             <span style={{fontWeight: 600, color: 'var(--text-primary)', fontSize: '16px'}}>{user?.user?.name}</span>
-             {user?.user?.description && (
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)', maxWidth: '120px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {user.user.description}
-                </span>
-             )}
+
+          {/* Name & Description */}
+          <div className="sidebar__user-info">
+            <span className="sidebar__user-name">{user?.user?.name}</span>
+            {user?.user?.description && (
+              <span className="sidebar__user-desc">{user.user.description}</span>
+            )}
           </div>
         </div>
+
         <div className="sidebar__headerRight">
-          <span className="material-icons" onClick={() => setShowGroupModal(true)} style={{cursor: 'pointer'}} title="Create Group">
-            group_add
-          </span>
-          <span className="material-icons" onClick={() => setShowSettingsModal(true)} style={{cursor: 'pointer'}} title="Settings">
-            settings
-          </span>
-          <span className="material-icons" onClick={() => navigate('/status')} style={{cursor: 'pointer'}} title="Status">
-            donut_large
-          </span>
-          <span className="material-icons" onClick={() => navigate('/newsfeed')} style={{cursor: 'pointer'}} title="Newsfeed">
-            dynamic_feed
-          </span>
+          <span className="material-icons" onClick={() => setShowGroupModal(true)} title="Create Group">group_add</span>
+          <span className="material-icons" onClick={() => setShowSettingsModal(true)} title="Settings">settings</span>
+          <span className="material-icons" onClick={() => navigate('/status')} title="Status">donut_large</span>
+          <span className="material-icons" onClick={() => navigate('/newsfeed')} title="Newsfeed">dynamic_feed</span>
           <span className="material-icons" onClick={toggleTheme} style={{cursor: 'pointer'}} title="Toggle Theme">
             {theme === 'dark' ? 'light_mode' : 'dark_mode'}
           </span>
@@ -296,65 +287,33 @@ function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme }) {
           <div className="modal-content">
             <div className="modal-header">
               <h3>Profile Settings</h3>
-              <span className="material-icons" onClick={() => setShowSettingsModal(false)} style={{cursor: 'pointer'}}>close</span>
+              <span className="material-icons" onClick={() => setShowSettingsModal(false)}>close</span>
             </div>
             <div className="modal-body">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Display Name</label>
-                 <input 
-                   type="text" 
-                   name="name"
-                   value={settingsForm.name} 
-                   onChange={handleSettingsChange} 
-                   className="group-name-input"
-                 />
+              <div className="modal-field">
+                <label>Display Name</label>
+                <input type="text" name="name" value={settingsForm.name} onChange={handleSettingsChange} className="group-name-input" placeholder="Your name" />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Email</label>
-                 <input 
-                   type="email" 
-                   name="email"
-                   value={settingsForm.email} 
-                   onChange={handleSettingsChange} 
-                   className="group-name-input"
-                 />
+              <div className="modal-field">
+                <label>Email</label>
+                <input type="email" name="email" value={settingsForm.email} onChange={handleSettingsChange} className="group-name-input" placeholder="your@email.com" />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Phone</label>
-                 <input 
-                   type="tel" 
-                   name="phone"
-                   value={settingsForm.phone} 
-                   onChange={handleSettingsChange} 
-                   className="group-name-input"
-                 />
+              <div className="modal-field">
+                <label>Phone</label>
+                <input type="tel" name="phone" value={settingsForm.phone} onChange={handleSettingsChange} className="group-name-input" placeholder="+1 234 567 890" />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>About / Description</label>
-                 <input 
-                   type="text" 
-                   name="description"
-                   value={settingsForm.description} 
-                   onChange={handleSettingsChange} 
-                   placeholder="Available"
-                   className="group-name-input"
-                 />
+              <div className="modal-field">
+                <label>About / Description</label>
+                <input type="text" name="description" value={settingsForm.description} onChange={handleSettingsChange} className="group-name-input" placeholder="Available" />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                 <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>New Password (leave blank to keep current)</label>
-                 <input 
-                   type="password" 
-                   name="password"
-                   value={settingsForm.password} 
-                   onChange={handleSettingsChange} 
-                   className="group-name-input"
-                   placeholder="••••••••"
-                 />
+              <div className="modal-field">
+                <label>New Password (leave blank to keep current)</label>
+                <input type="password" name="password" value={settingsForm.password} onChange={handleSettingsChange} className="group-name-input" placeholder="••••••••" />
               </div>
             </div>
             <div className="modal-footer">
               <button onClick={handleUpdateSettings} className="create-group-btn" disabled={settingsUpdating}>
-                 {settingsUpdating ? 'Saving...' : 'Save Changes'}
+                {settingsUpdating ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
