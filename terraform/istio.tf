@@ -18,7 +18,7 @@ resource "helm_release" "istio_base" {
   wait             = true
   timeout          = 300
 
-  set =[{
+  set =[ {
     name  = "defaultRevision"
     value = "default"
   }]
@@ -37,19 +37,15 @@ resource "helm_release" "istiod" {
   timeout    = 300
 
   # Keep resources low for local Kind development
-  set =[{
-    name  = "pilot.resources.requests.cpu"
-    value = "100m" },
-  { name = "pilot.resources.requests.memory"
-   value = "256Mi" },
-  { name = "pilot.resources.limits.cpu"
-   value = "500m" },
-  { name = "pilot.resources.limits.memory"
-   value = "512Mi" },
-  { name = "pilot.autoscaleMin"
-   value = "1" },
-  { name = "pilot.autoscaleMax"
-   value = "1" }]
+  set=[{ name = "pilot.resources.requests.cpu" , value = "100m" },
+  { name = "pilot.resources.requests.memory" , value = "256Mi" },
+  { name = "pilot.resources.limits.cpu" , value = "500m" },
+  { name = "pilot.resources.limits.memory" , value = "512Mi" },
+
+  # Single replica is enough for local dev
+  {name = "pilot.autoscaleMin", value = "1" },
+  {name = "pilot.autoscaleMax", value = "1" }]
+
 
   depends_on = [helm_release.istio_base]
 }
@@ -69,9 +65,9 @@ resource "helm_release" "istio_ingressgateway" {
   values = [
     yamlencode({
       service = {
-        type = "LoadBalancer"   # MetalLB assigns a real IP from the pool
+        type = "LoadBalancer" # MetalLB assigns a real IP from the pool
         ports = [
-          { name = "http2", port = 80,  targetPort = 8080 },
+          { name = "http2", port = 80, targetPort = 8080 },
           { name = "https", port = 443, targetPort = 8443 },
         ]
       }

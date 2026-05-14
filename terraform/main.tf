@@ -6,19 +6,20 @@ provider "kind" {}
 # NOTE: In the Helm provider, 'kubernetes' is a BLOCK, not an assignment.
 provider "kubernetes" {
   host                   = kind_cluster.whatsapp.endpoint
-  cluster_ca_certificate = base64decode(kind_cluster.whatsapp.cluster_ca_certificate)
-  client_certificate     = base64decode(kind_cluster.whatsapp.client_certificate)
-  client_key             = base64decode(kind_cluster.whatsapp.client_key)
+  cluster_ca_certificate = kind_cluster.whatsapp.cluster_ca_certificate
+  client_certificate     = kind_cluster.whatsapp.client_certificate
+  client_key             = kind_cluster.whatsapp.client_key
 }
 
 provider "helm" {
-  kubernetes ={
+  kubernetes = {
     host                   = kind_cluster.whatsapp.endpoint
-    cluster_ca_certificate = base64decode(kind_cluster.whatsapp.cluster_ca_certificate)
-    client_certificate     = base64decode(kind_cluster.whatsapp.client_certificate)
-    client_key             = base64decode(kind_cluster.whatsapp.client_key)
+    cluster_ca_certificate = kind_cluster.whatsapp.cluster_ca_certificate
+    client_certificate     = kind_cluster.whatsapp.client_certificate
+    client_key             = kind_cluster.whatsapp.client_key
   }
 }
+
 
 provider "null" {}
 provider "local" {}
