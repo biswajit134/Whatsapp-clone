@@ -6,6 +6,7 @@ import Auth from './Auth';
 import AudioCall from './AudioCall';
 import Newsfeed from './Newsfeed';
 import Status from './Status';
+import Reels from './Reels';
 import socket from './socket';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
@@ -63,6 +64,7 @@ function App() {
           <Routes>
             <Route path="/newsfeed" element={<Newsfeed user={user} />} />
             <Route path="/status" element={<Status user={user} />} />
+            <Route path="/reels" element={<Reels user={user} />} />
             <Route path="/rooms/:otherUserId" element={<Chat user={user} onlineUsers={onlineUsers} />} />
             <Route path="/" element={<Navigate to="/newsfeed" replace />} />
           </Routes>

@@ -188,7 +188,8 @@ function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme }) {
         <div className="sidebar__headerRight">
           <span className="material-icons" onClick={() => setShowGroupModal(true)} title="Create Group">group_add</span>
           <span className="material-icons" onClick={() => setShowSettingsModal(true)} title="Settings">settings</span>
-          <span className="material-icons" onClick={() => navigate('/status')} title="Status">donut_large</span>
+          <span className="material-icons" onClick={() => navigate('/status')} title="Status">motion_photos_on</span>
+          <span className="material-icons" onClick={() => navigate('/reels')} title="Reels">theaters</span>
           <span className="material-icons" onClick={() => navigate('/newsfeed')} title="Newsfeed">dynamic_feed</span>
           <span className="material-icons" onClick={toggleTheme} style={{cursor: 'pointer'}} title="Toggle Theme">
             {theme === 'dark' ? 'light_mode' : 'dark_mode'}
