@@ -11,7 +11,7 @@ const REACTIONS = [
   { emoji: '😡', label: 'Angry' },
 ];
 
-function Newsfeed({ user }) {
+function Newsfeed({ user, onMenuClick }) {
   const [posts, setPosts] = useState([]);
   const [newPostContent, setNewPostContent] = useState('');
   const [mediaFile, setMediaFile] = useState(null);
@@ -102,6 +102,14 @@ function Newsfeed({ user }) {
 
   return (
     <div className="newsfeed-container">
+      {/* Mobile top bar */}
+      <div className="nf-mobile-bar">
+        <button className="mobile-menu-btn" onClick={onMenuClick}>
+          <span className="material-icons">menu</span>
+        </button>
+        <span className="nf-mobile-title">Newsfeed</span>
+      </div>
+
       <div className="newsfeed-content">
         {/* Create Post */}
         <div className="create-post-card">

@@ -68,4 +68,10 @@ body {
   width: 100vw;
   box-shadow: none;
   transition: background-color 0.3s;
+  overflow: hidden;
 }
+
+/* Mobile-only elements: hidden by default, shown via media query */
+.mobile-menu-btn  { display: none; }
+.chat__back-btn   { display: none; }
+.mobile-overlay   { display: none; }

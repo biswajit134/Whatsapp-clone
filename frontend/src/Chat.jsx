@@ -4,7 +4,7 @@ import axios from './axios';
 import socket from './socket';
 import { useParams, useLocation } from 'react-router-dom';
 
-function Chat({ user, onlineUsers }) {
+function Chat({ user, onlineUsers, onMenuClick }) {
   const [input, setInput] = useState('');
   const [otherUser, setOtherUser] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -216,6 +216,11 @@ function Chat({ user, onlineUsers }) {
       )}
 
       <div className="chat__header">
+        {/* Mobile: back to sidebar */}
+        <button className="chat__back-btn" onClick={onMenuClick} title="Contacts">
+          <span className="material-icons">menu</span>
+        </button>
+
         {/* Avatar */}
         {isGroup ? (
           <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #25D366, #128C7E)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', flexShrink: 0 }}>

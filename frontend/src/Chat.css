@@ -272,6 +272,24 @@
   flex-shrink: 0;
 }
 
+/* ── Mobile back / menu button ── */
+.chat__back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s, color 0.2s;
+}
+.chat__back-btn:hover { background: var(--bg-search-input); color: var(--text-primary); }
+.chat__back-btn .material-icons { font-size: 22px !important; }
+
 /* Left icons */
 .chat__footer-icon {
   font-size: 24px !important;

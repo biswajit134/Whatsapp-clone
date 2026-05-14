@@ -338,7 +338,7 @@ function ReelCard({ reel, currentUser, isActive, onLike, onComment, onShare, onD
 }
 
 /* ─── Main Reels Page ──────────────────────────────────────── */
-export default function Reels({ user }) {
+export default function Reels({ user, onMenuClick }) {
   const [reels, setReels]             = useState([]);
   const [loading, setLoading]         = useState(true);
   const [activeIdx, setActiveIdx]     = useState(0);
@@ -413,6 +413,15 @@ export default function Reels({ user }) {
 
   return (
     <div className="reels-page">
+      {/* Mobile menu button — overlaid on top of video */}
+      <button
+        className="mobile-menu-btn reels-mobile-menu"
+        onClick={onMenuClick}
+        style={{ position: 'absolute', top: 16, left: 16, zIndex: 200, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: 38, height: 38, display: 'none', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'white' }}
+      >
+        <span className="material-icons" style={{ fontSize: 20 }}>menu</span>
+      </button>
+
       {/* Feed */}
       <div className="reels-feed" ref={containerRef}>
         {loading ? (

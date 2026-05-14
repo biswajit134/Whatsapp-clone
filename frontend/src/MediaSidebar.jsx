@@ -10,7 +10,7 @@ const NAV = [
   { key: 'status',   icon: 'motion_photos_on',  label: 'Status',  path: '/status' },
 ];
 
-export default function MediaSidebar({ user, setUser, theme, toggleTheme, onReelUpload }) {
+export default function MediaSidebar({ user, setUser, theme, toggleTheme, onReelUpload, isOpen, onClose }) {
   const navigate  = useNavigate();
   const location  = useLocation();
   const mode      = location.pathname.replace('/', '') || 'newsfeed'; // 'newsfeed' | 'reels' | 'status'
@@ -146,7 +146,7 @@ export default function MediaSidebar({ user, setUser, theme, toggleTheme, onReel
   const BG_COLORS = ['#25D366', '#34B7F1', '#FF7A59', '#8A2BE2', '#E91E63', '#FF9800'];
 
   return (
-    <div className="ms-root">
+    <div className={`ms-root ${isOpen ? 'ms-root--open' : ''}`}>
       {/* ── Brand ── */}
       <div className="ms-brand">
         <div className="ms-brand-logo">

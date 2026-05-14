@@ -12,7 +12,7 @@ const NAV = [
   { key: 'status',   icon: 'motion_photos_on', label: 'Status', path: '/status' },
 ];
 
-function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme }) {
+function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme, isOpen, onClose }) {
   const [contacts, setContacts]   = useState([]);
   const [groups, setGroups]       = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -134,7 +134,7 @@ function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme }) {
   const onlineCount = contacts.filter(c => onlineUsers.includes(c._id)).length;
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${isOpen ? 'sidebar--open' : ''}`}>
 
       {/* ── Brand header ── */}
       <div className="sidebar__brand">

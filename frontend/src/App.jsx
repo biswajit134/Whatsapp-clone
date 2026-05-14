@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Sidebar from './Sidebar';
 import Chat from './Chat';
@@ -11,17 +11,28 @@ import MediaSidebar from './MediaSidebar';
 import socket from './socket';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
-/* Inner component — needs to be inside <Router> to use useLocation */
+/* ── Inner component — needs to be inside <Router> to use useLocation ── */
 function AppRoutes({ user, setUser, onlineUsers, theme, toggleTheme }) {
   const location = useLocation();
-  const isMediaRoute = ['/newsfeed', '/reels', '/status'].some(p => location.pathname.startsWith(p));
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Reel upload trigger (MediaSidebar → Reels via ref/event)
+  const isMediaRoute = ['/newsfeed', '/reels', '/status'].some(p =>
+    location.pathname.startsWith(p)
+  );
+
+  // Close sidebar whenever route changes (mobile nav)
+  useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
+
   const triggerReelUpload = () => window.dispatchEvent(new CustomEvent('open_reel_upload'));
 
   return (
     <>
-      {/* Chat sidebar — only on chat/default routes */}
+      {/* Mobile backdrop — closes sidebar when tapped */}
+      {sidebarOpen && (
+        <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Chat sidebar — chat routes only */}
       {!isMediaRoute && (
         <Sidebar
           user={user}
@@ -29,10 +40,12 @@ function AppRoutes({ user, setUser, onlineUsers, theme, toggleTheme }) {
           onlineUsers={onlineUsers}
           theme={theme}
           toggleTheme={toggleTheme}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Media sidebar — only on media routes */}
+      {/* Media sidebar — media routes only */}
       {isMediaRoute && (
         <MediaSidebar
           user={user}
@@ -40,19 +53,22 @@ function AppRoutes({ user, setUser, onlineUsers, theme, toggleTheme }) {
           theme={theme}
           toggleTheme={toggleTheme}
           onReelUpload={triggerReelUpload}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
         />
       )}
 
       <Routes>
-        {/* Media routes */}
-        <Route path="/newsfeed" element={<Newsfeed user={user} />} />
-        <Route path="/reels"    element={<Reels    user={user} />} />
-        <Route path="/status"   element={<Status   user={user} />} />
-
-        {/* Chat */}
-        <Route path="/rooms/:otherUserId" element={<Chat user={user} onlineUsers={onlineUsers} />} />
-
-        {/* Default */}
+        <Route path="/newsfeed" element={<Newsfeed user={user} onMenuClick={() => setSidebarOpen(true)} />} />
+        <Route path="/reels"    element={<Reels    user={user} onMenuClick={() => setSidebarOpen(true)} />} />
+        <Route path="/status"   element={<Status   user={user} onMenuClick={() => setSidebarOpen(true)} />} />
+        <Route path="/rooms/:otherUserId" element={
+          <Chat
+            user={user}
+            onlineUsers={onlineUsers}
+            onMenuClick={() => setSidebarOpen(true)}
+          />
+        } />
         <Route path="/" element={<Navigate to="/newsfeed" replace />} />
       </Routes>
     </>
@@ -60,9 +76,9 @@ function AppRoutes({ user, setUser, onlineUsers, theme, toggleTheme }) {
 }
 
 function App() {
-  const [user, setUser]             = useState(null);
+  const [user, setUser]               = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
-  const [theme, setTheme]           = useState(() => localStorage.getItem('whatsapp_theme') || 'dark');
+  const [theme, setTheme]             = useState(() => localStorage.getItem('whatsapp_theme') || 'dark');
 
   useEffect(() => {
     const saved = localStorage.getItem('whatsapp_user');
