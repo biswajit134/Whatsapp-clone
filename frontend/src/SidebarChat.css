@@ -3,11 +3,30 @@
   padding: 20px;
   cursor: pointer;
   border-bottom: 1px solid var(--border-color);
-  transition: background-color 0.2s ease-in-out;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebarChat::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background-color: #25D366;
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
 }
 
 .sidebarChat:hover {
   background-color: var(--bg-chat-hover);
+  padding-left: 25px;
+}
+
+.sidebarChat:hover::before {
+  transform: scaleY(1);
 }
 
 .sidebarChat--active {

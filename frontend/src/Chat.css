@@ -45,6 +45,14 @@
 .chat__headerRight > .material-icons {
   color: var(--icon-color);
   margin-right: 15px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.chat__headerRight > .material-icons:hover {
+  color: var(--text-primary);
+  transform: scale(1.15) rotate(-5deg);
+  text-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .chat__body {
@@ -69,7 +77,12 @@
   color: var(--text-primary);
   margin-bottom: 30px;
   box-shadow: 0 1px 0.5px var(--shadow-color);
-  transition: background-color 0.3s, color 0.3s;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.chat__message:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .chat__receiver {
@@ -124,4 +137,10 @@
   padding: 10px;
   color: var(--text-muted);
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.chat__footer > .material-icons:hover {
+  color: #25D366;
+  transform: scale(1.2);
 }

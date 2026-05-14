@@ -34,21 +34,26 @@ function Auth({ setUser }) {
     };
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, submittingLogin) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const response = await axios.post(endpoint, formData);
-      
-      const userData = response.data;
-      localStorage.setItem('whatsapp_user', JSON.stringify(userData));
-      setUser(userData);
+      if (submittingLogin) {
+        const response = await axios.post('/api/auth/login', {
+          email: formData.email,
+          password: formData.password
+        });
+        localStorage.setItem('whatsapp_user', JSON.stringify(response.data));
+        setUser(response.data);
+      } else {
+        const response = await axios.post('/api/auth/register', formData);
+        localStorage.setItem('whatsapp_user', JSON.stringify(response.data));
+        setUser(response.data);
+      }
     } catch (err) {
-      console.error("Auth Error:", err);
-      setError(err.response?.data?.error || err.message || 'Authentication failed');
+      setError(err.response?.data?.message || 'An error occurred during authentication');
     } finally {
       setIsLoading(false);
     }
@@ -56,60 +61,6 @@ function Auth({ setUser }) {
 
   return (
     <div className="auth-wrapper">
-      <div className="auth-container">
-        {/* Left Side: Hero Image */}
-        <div className="auth-hero">
-          <div className="auth-hero-overlay">
-            <div className="auth-hero-content">
-              <span className="material-icons hero-icon">chat_bubble_outline</span>
-              <h2>Welcome to Connect</h2>
-              <p>Experience fast, simple, and secure messaging across all your devices.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side: Form */}
-        <div className="auth-form-container">
-          <div className="auth-header">
-            <h1>{isLogin ? 'Sign in to your account' : 'Create an account'}</h1>
-            <p className="auth-subtitle">
-              {isLogin ? 'Welcome back! Please enter your details.' : 'Join us to start messaging!'}
-            </p>
-          </div>
-          
-          {error && (
-            <div className="auth-error-box">
-              <span className="material-icons">error_outline</span>
-              <p>{error}</p>
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="auth-form">
-            {!isLogin && (
-              <div className="form-group">
-                <label>Full Name</label>
-                <div className="input-wrapper">
-                  <span className="material-icons input-icon">person_outline</span>
-                  <input 
-                    type="text" 
-                    name="name" 
-                    placeholder="e.g. Jane Doe" 
-                    value={formData.name}
-                    onChange={handleChange}
-                    required 
-                  />
-                </div>
-              </div>
-            )}
-            
-            <div className="form-group">
-              <label>Email Address</label>
-              <div className="input-wrapper">
-                <span className="material-icons input-icon">mail_outline</span>
-                <input 
-                  type="email" 
-                  name="email" 
-                  placeholder="e.g. jane@example.com" 
                   value={formData.email}
                   onChange={handleChange}
                   required 

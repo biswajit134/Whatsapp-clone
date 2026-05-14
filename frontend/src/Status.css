@@ -35,11 +35,12 @@
   color: #25D366;
   font-size: 32px;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .add-status-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.2) rotate(90deg);
+  text-shadow: 0 4px 10px rgba(37, 211, 102, 0.4);
 }
 
 .status-list {
@@ -53,11 +54,30 @@
   padding: 15px 20px;
   cursor: pointer;
   border-bottom: 1px solid var(--border-color);
-  transition: background-color 0.2s;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.status-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background-color: #25D366;
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
 }
 
 .status-item:hover {
   background-color: var(--bg-search);
+  padding-left: 25px;
+}
+
+.status-item:hover::before {
+  transform: scaleY(1);
 }
 
 .status-avatar-wrapper {
