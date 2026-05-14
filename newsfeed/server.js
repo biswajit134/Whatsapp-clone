@@ -92,6 +92,47 @@ app.post('/api/newsfeed/:id/comment', async (req, res) => {
   }
 });
 
+app.post('/api/newsfeed/:id/react', async (req, res) => {
+  try {
+    const { userId, emoji } = req.body;
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+
+    const existingIndex = post.reactions.findIndex(r => r.userId.toString() === userId);
+    if (existingIndex !== -1) {
+      if (post.reactions[existingIndex].emoji === emoji) {
+        post.reactions.splice(existingIndex, 1); // remove if same emoji (toggle off)
+      } else {
+        post.reactions[existingIndex].emoji = emoji; // change emoji
+      }
+    } else {
+      post.reactions.push({ userId, emoji });
+    }
+
+    await post.save();
+    const populatedPost = await Post.findById(post._id)
+      .populate('userId', 'name profilePic')
+      .populate('comments.userId', 'name profilePic');
+    res.status(200).json(populatedPost);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/newsfeed/:id/share', async (req, res) => {
+  try {
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { shares: 1 } },
+      { new: true }
+    ).populate('userId', 'name profilePic').populate('comments.userId', 'name profilePic');
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    res.status(200).json(post);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/', (req, res) => res.status(200).send('Newsfeed Microservice API'));
 
 app.listen(port, () => console.log(`Newsfeed Service listening on port ${port}`));

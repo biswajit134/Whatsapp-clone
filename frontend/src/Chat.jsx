@@ -264,8 +264,8 @@ function Chat({ user, onlineUsers }) {
       </div>
 
       <div className="chat__footer">
-        <span className="material-icons">insert_emoticon</span>
-        <span className="material-icons" onClick={() => fileInputRef.current.click()} style={{cursor: 'pointer', margin: '0 10px'}} title="Attach File">attach_file</span>
+        <span className="material-icons chat__footer-icon">insert_emoticon</span>
+        <span className="material-icons chat__footer-icon" onClick={() => fileInputRef.current.click()} title="Attach File">attach_file</span>
         <input 
           type="file" 
           accept="image/*,audio/*" 
@@ -273,30 +273,37 @@ function Chat({ user, onlineUsers }) {
           style={{ display: 'none' }} 
           onChange={handleFileSelect} 
         />
+
         {isRecording ? (
-          <div style={{ flex: 1, color: '#ef5350', fontWeight: 'bold', padding: '0 15px', display: 'flex', alignItems: 'center' }}>
-            <span className="material-icons" style={{ animation: 'pulse 1.5s infinite', marginRight: '10px' }}>mic</span>
-            Recording Audio...
+          <div className="chat__recording-indicator">
+            <span className="material-icons" style={{ animation: 'pulse 1.5s infinite', color: '#ef5350' }}>mic</span>
+            <span>Recording Audio...</span>
           </div>
         ) : (
-          <form onSubmit={sendMessage}>
+          <form onSubmit={sendMessage} className="chat__input-form">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type a message"
               type="text"
             />
-            <button onClick={sendMessage} type="submit">
-              Send a message
-            </button>
           </form>
         )}
+
         {isRecording ? (
-          <span className="material-icons" onClick={stopRecording} style={{ color: '#ef5350', cursor: 'pointer' }} title="Stop & Send">stop_circle</span>
+          <button className="chat__send-btn chat__send-btn--stop" onClick={stopRecording} title="Stop & Send">
+            <span className="material-icons">stop</span>
+          </button>
         ) : input.trim().length > 0 ? (
-          <span className="material-icons" onClick={sendMessage} style={{ cursor: 'pointer' }} title="Send Message">send</span>
+          <button className="chat__send-btn" onClick={sendMessage} title="Send Message">
+            <svg viewBox="0 0 24 24" fill="white" width="22" height="22">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
         ) : (
-          <span className="material-icons" onClick={startRecording} style={{ cursor: 'pointer' }} title="Hold to Record">mic</span>
+          <button className="chat__send-btn chat__send-btn--mic" onClick={startRecording} title="Record Audio">
+            <span className="material-icons">mic</span>
+          </button>
         )}
       </div>
     </div>
