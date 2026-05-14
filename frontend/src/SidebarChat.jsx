@@ -11,40 +11,48 @@ function SidebarChat({ id, name, isOnline, profilePic, isGroup, description }) {
       <div className={`sidebarChat ${isActive ? 'sidebarChat--active' : ''}`}>
 
         {/* Avatar */}
-        {isGroup ? (
-          <div style={{
-            width: 45, height: 45, borderRadius: '50%',
-            backgroundColor: '#25D366', display: 'flex',
-            justifyContent: 'center', alignItems: 'center',
-            color: 'white', flexShrink: 0
-          }}>
-            <span className="material-icons" style={{ fontSize: 24 }}>groups</span>
-          </div>
-        ) : profilePic ? (
-          <img src={profilePic} alt={name} style={{ width: 45, height: 45, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-        ) : (
-          <span className="material-icons avatar">account_circle</span>
-        )}
+        <div className="sidebarChat__avatar">
+          {isGroup ? (
+            <div className="sidebarChat__group-icon">
+              <span className="material-icons">groups</span>
+            </div>
+          ) : profilePic ? (
+            <img src={profilePic} alt={name} className="sidebarChat__avatar-img" />
+          ) : (
+            <span className="material-icons sidebarChat__avatar-placeholder">account_circle</span>
+          )}
+          {/* Online dot */}
+          {!isGroup && isOnline && <span className="sidebarChat__online-dot" />}
+        </div>
 
         {/* Info */}
         <div className="sidebarChat__info">
-          <h2>{name}</h2>
-          <div className="sidebarChat__meta">
-            <span
-              className="sidebarChat__status"
-              style={{ color: isGroup ? 'var(--text-muted)' : (isOnline ? '#25D366' : 'var(--text-muted)') }}
-            >
-              {isGroup ? 'Group' : (isOnline ? 'Online' : 'Offline')}
-            </span>
-            {!isGroup && description && (
-              <>
-                <span style={{ color: 'var(--border-color)', fontSize: 11 }}>·</span>
-                <span className="sidebarChat__desc">{description}</span>
-              </>
+          <div className="sidebarChat__name-row">
+            <h2 className="sidebarChat__name">{name}</h2>
+            {isGroup && (
+              <span className="sidebarChat__group-badge">Group</span>
             )}
+          </div>
+          <div className="sidebarChat__sub">
+            {isGroup
+              ? <span className="sidebarChat__status">Tap to open chat</span>
+              : <>
+                  <span className={`sidebarChat__status ${isOnline ? 'sidebarChat__status--online' : ''}`}>
+                    {isOnline ? 'Online' : 'Offline'}
+                  </span>
+                  {description && (
+                    <>
+                      <span className="sidebarChat__dot">·</span>
+                      <span className="sidebarChat__desc">{description}</span>
+                    </>
+                  )}
+                </>
+            }
           </div>
         </div>
 
+        {/* Arrow indicator */}
+        <span className="material-icons sidebarChat__arrow">chevron_right</span>
       </div>
     </Link>
   );

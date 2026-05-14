@@ -1,319 +1,377 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Sidebar.css';
 import SidebarChat from './SidebarChat';
 import axios from './axios';
 import socket from './socket';
-
 import { useNavigate } from 'react-router-dom';
 
+const NAV = [
+  { key: 'chat',     icon: 'forum',           label: 'Chats',  path: '/rooms' },
+  { key: 'newsfeed', icon: 'dynamic_feed',     label: 'Feed',   path: '/newsfeed' },
+  { key: 'reels',    icon: 'theaters',         label: 'Reels',  path: '/reels' },
+  { key: 'status',   icon: 'motion_photos_on', label: 'Status', path: '/status' },
+];
+
 function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme }) {
-  const [contacts, setContacts] = useState([]);
-  const [groups, setGroups] = useState([]);
+  const [contacts, setContacts]   = useState([]);
+  const [groups, setGroups]       = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const profilePicRef = React.useRef(null);
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'groups' | 'online'
+  const profilePicRef = useRef(null);
   const navigate = useNavigate();
 
-  // Group Creation State
-  const [showGroupModal, setShowGroupModal] = useState(false);
-  const [groupName, setGroupName] = useState('');
+  // Group Modal
+  const [showGroupModal, setShowGroupModal]         = useState(false);
+  const [groupName, setGroupName]                   = useState('');
   const [selectedParticipants, setSelectedParticipants] = useState([]);
 
-  // Settings State
+  // Settings Modal
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settingsForm, setSettingsForm] = useState({
     name: user?.user?.name || '',
     email: user?.user?.email || '',
     phone: user?.user?.phone || '',
     description: user?.user?.description || '',
-    password: '' // Only if changing
+    password: '',
   });
   const [settingsUpdating, setSettingsUpdating] = useState(false);
 
   useEffect(() => {
-    // Fetch users
-    axios.get('/api/users').then(response => {
-      const otherUsers = response.data.filter(u => u._id !== user?.user?._id);
-      setContacts(otherUsers);
-    }).catch(err => console.error(err));
+    axios.get('/api/users').then(r => {
+      setContacts(r.data.filter(u => u._id !== user?.user?._id));
+    }).catch(console.error);
 
-    // Fetch rooms (groups)
-    axios.get('/api/rooms').then(response => {
-      const allGroups = response.data.filter(r => r.isGroup && r.participants?.includes(user?.user?._id));
-      setGroups(allGroups);
-    }).catch(err => console.error(err));
+    axios.get('/api/rooms').then(r => {
+      setGroups(r.data.filter(room => room.isGroup && room.participants?.includes(user?.user?._id)));
+    }).catch(console.error);
 
-    const handleNewUser = (newUser) => {
-      if (newUser._id !== user?.user?._id) {
-        setContacts((prev) => {
-          if (prev.some(u => u._id === newUser._id)) return prev;
-          return [...prev, newUser];
-        });
+    const onNewUser = (u) => {
+      if (u._id !== user?.user?._id) {
+        setContacts(prev => prev.some(c => c._id === u._id) ? prev : [...prev, u]);
       }
     };
-
-    const handleUserUpdated = (updatedUser) => {
-      if (updatedUser._id === user?.user?._id) {
-        const newUserState = { ...user, user: updatedUser };
-        setUser(newUserState);
-        localStorage.setItem('whatsapp_user', JSON.stringify(newUserState));
+    const onUserUpdated = (u) => {
+      if (u._id === user?.user?._id) {
+        const updated = { ...user, user: u };
+        setUser(updated);
+        localStorage.setItem('whatsapp_user', JSON.stringify(updated));
       } else {
-        setContacts((prev) => prev.map(c => c._id === updatedUser._id ? updatedUser : c));
+        setContacts(prev => prev.map(c => c._id === u._id ? u : c));
+      }
+    };
+    const onInsertedRoom = (room) => {
+      if (room.isGroup && room.participants?.includes(user?.user?._id)) {
+        setGroups(prev => prev.some(g => g._id === room._id) ? prev : [...prev, room]);
       }
     };
 
-    const handleInsertedRoom = (newRoom) => {
-      if (newRoom.isGroup && newRoom.participants?.includes(user?.user?._id)) {
-        setGroups((prev) => {
-          if (prev.some(g => g._id === newRoom._id)) return prev;
-          return [...prev, newRoom];
-        });
-      }
-    };
-
-    socket.on('new_user', handleNewUser);
-    socket.on('user_updated', handleUserUpdated);
-    socket.on('inserted_room', handleInsertedRoom);
-
+    socket.on('new_user', onNewUser);
+    socket.on('user_updated', onUserUpdated);
+    socket.on('inserted_room', onInsertedRoom);
     return () => {
-      socket.off('new_user', handleNewUser);
-      socket.off('user_updated', handleUserUpdated);
-      socket.off('inserted_room', handleInsertedRoom);
+      socket.off('new_user', onNewUser);
+      socket.off('user_updated', onUserUpdated);
+      socket.off('inserted_room', onInsertedRoom);
     };
   }, [user]);
 
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image is too large! Maximum 5MB allowed.");
-      return;
-    }
-
+    if (file.size > 5 * 1024 * 1024) { alert('Max 5MB'); return; }
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onloadend = async () => {
-      const base64Image = reader.result;
       try {
-        await axios.post('/api/users/profilePic', {
-          userId: user.user._id,
-          profilePic: base64Image
-        });
-      } catch(err) {
-        console.error(err);
-        alert("Error updating profile picture");
-      }
+        await axios.post('/api/users/profilePic', { userId: user.user._id, profilePic: reader.result });
+      } catch { alert('Error updating picture'); }
     };
   };
 
   const handleCreateGroup = async () => {
     if (!groupName.trim() || selectedParticipants.length === 0) {
-      alert("Please provide a group name and select at least one participant.");
-      return;
+      alert('Please provide a group name and select at least one participant.'); return;
     }
-
-    const newGroup = {
-      name: groupName,
-      participants: [...selectedParticipants, user.user._id],
-      admin: user.user._id
-    };
-
     try {
-      await axios.post('/api/groups/new', newGroup);
+      await axios.post('/api/groups/new', {
+        name: groupName,
+        participants: [...selectedParticipants, user.user._id],
+        admin: user.user._id,
+      });
       setShowGroupModal(false);
       setGroupName('');
       setSelectedParticipants([]);
-    } catch(err) {
-      console.error("Error creating group:", err);
-      alert("Failed to create group");
-    }
+    } catch { alert('Failed to create group'); }
   };
 
-  const toggleParticipant = (userId) => {
-    if (selectedParticipants.includes(userId)) {
-      setSelectedParticipants(prev => prev.filter(id => id !== userId));
-    } else {
-      setSelectedParticipants(prev => [...prev, userId]);
-    }
-  };
-
-  const handleSettingsChange = (e) => {
-    setSettingsForm({ ...settingsForm, [e.target.name]: e.target.value });
-  };
+  const toggleParticipant = (id) =>
+    setSelectedParticipants(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
 
   const handleUpdateSettings = async () => {
     setSettingsUpdating(true);
     try {
-      const response = await axios.post('/api/users/update', {
-        userId: user.user._id,
-        ...settingsForm
-      });
-      // Updating UI is handled by socket handleUserUpdated
+      await axios.post('/api/users/update', { userId: user.user._id, ...settingsForm });
       setShowSettingsModal(false);
-      setSettingsForm(prev => ({ ...prev, password: '' })); // clear pass field
-    } catch(err) {
-      alert("Error updating profile: " + (err.response?.data?.error || err.message));
-    } finally {
-      setSettingsUpdating(false);
-    }
+      setSettingsForm(prev => ({ ...prev, password: '' }));
+    } catch (err) {
+      alert('Error: ' + (err.response?.data?.error || err.message));
+    } finally { setSettingsUpdating(false); }
   };
+
+  // Filter logic
+  const filteredGroups = groups.filter(g =>
+    g.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const filteredContacts = contacts.filter(c => {
+    const matchSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
+    if (activeTab === 'groups')  return false;
+    if (activeTab === 'online')  return matchSearch && onlineUsers.includes(c._id);
+    return matchSearch;
+  });
+  const showGroups = activeTab !== 'online';
+  const onlineCount = contacts.filter(c => onlineUsers.includes(c._id)).length;
 
   return (
     <div className="sidebar">
-      <div className="sidebar__header">
-        <div className="sidebar__headerLeft">
 
-          {/* Avatar */}
-          <div className="sidebar__avatar-wrap" onClick={() => profilePicRef.current.click()} title="Change Profile Picture">
-            {user?.user?.profilePic ? (
-              <img src={user.user.profilePic} alt="profile" className="sidebar__avatar-img" />
-            ) : (
-              <span className="material-icons sidebar__avatar-icon">account_circle</span>
-            )}
-            <div className="sidebar__avatar-edit">
-              <span className="material-icons">camera_alt</span>
-            </div>
-          </div>
-          <input type="file" accept="image/*" ref={profilePicRef} style={{ display: 'none' }} onChange={handleProfilePicChange} />
-
-          {/* Name & Description */}
-          <div className="sidebar__user-info">
-            <span className="sidebar__user-name">{user?.user?.name}</span>
-            {user?.user?.description && (
-              <span className="sidebar__user-desc">{user.user.description}</span>
-            )}
-          </div>
+      {/* ── Brand header ── */}
+      <div className="sidebar__brand">
+        <div className="sidebar__brand-logo">
+          <span className="material-icons">hub</span>
         </div>
-
-        <div className="sidebar__headerRight">
-          <span className="material-icons" onClick={() => setShowGroupModal(true)} title="Create Group">group_add</span>
-          <span className="material-icons" onClick={() => setShowSettingsModal(true)} title="Settings">settings</span>
-          <span className="material-icons" onClick={() => navigate('/status')} title="Status">motion_photos_on</span>
-          <span className="material-icons" onClick={() => navigate('/reels')} title="Reels">theaters</span>
-          <span className="material-icons" onClick={() => navigate('/newsfeed')} title="Newsfeed">dynamic_feed</span>
-          <span className="material-icons" onClick={toggleTheme} style={{cursor: 'pointer'}} title="Toggle Theme">
-            {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-          </span>
-          <span className="material-icons" onClick={() => {
-            localStorage.removeItem('whatsapp_user');
-            setUser(null);
-          }} style={{cursor: 'pointer'}} title="Logout">logout</span>
+        <span className="sidebar__brand-name">ConnectApp</span>
+        <div className="sidebar__brand-actions">
+          <button className="sb-icon-btn" onClick={() => setShowGroupModal(true)} title="New Group">
+            <span className="material-icons">group_add</span>
+          </button>
+          <button className="sb-icon-btn" onClick={() => setShowSettingsModal(true)} title="Settings">
+            <span className="material-icons">settings</span>
+          </button>
+          <button className="sb-icon-btn" onClick={toggleTheme} title="Toggle Theme">
+            <span className="material-icons">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+          </button>
         </div>
       </div>
+
+      {/* ── Profile card ── */}
+      <div className="sidebar__profile-card">
+        <div className="sidebar__avatar-wrap" onClick={() => profilePicRef.current.click()} title="Change Photo">
+          {user?.user?.profilePic
+            ? <img src={user.user.profilePic} alt="me" className="sidebar__avatar-img" />
+            : <span className="material-icons sidebar__avatar-icon">account_circle</span>}
+          <div className="sidebar__avatar-edit">
+            <span className="material-icons">camera_alt</span>
+          </div>
+        </div>
+        <input type="file" accept="image/*" ref={profilePicRef} style={{ display: 'none' }} onChange={handleProfilePicChange} />
+        <div className="sidebar__user-info">
+          <span className="sidebar__user-name">{user?.user?.name}</span>
+          {user?.user?.description && (
+            <span className="sidebar__user-desc">{user.user.description}</span>
+          )}
+        </div>
+        <button className="sb-icon-btn sb-logout-btn" title="Logout"
+          onClick={() => { localStorage.removeItem('whatsapp_user'); setUser(null); }}>
+          <span className="material-icons">logout</span>
+        </button>
+      </div>
+
+      {/* ── Nav tabs ── */}
+      <nav className="sidebar__nav">
+        {NAV.map(({ key, icon, label, path }) => (
+          <button
+            key={key}
+            className={`sidebar__nav-btn ${key === 'chat' ? 'sidebar__nav-btn--active' : ''}`}
+            onClick={() => navigate(path)}
+            title={label}
+          >
+            <span className="material-icons">{icon}</span>
+            <span className="sidebar__nav-label">{label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* ── Search ── */}
       <div className="sidebar__search">
         <div className="sidebar__searchContainer">
           <span className="material-icons">search</span>
-          <input 
-            placeholder="Search or start new chat" 
-            type="text" 
+          <input
+            placeholder="Search chats..."
+            type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
           />
+          {searchTerm && (
+            <span className="material-icons sb-search-clear" onClick={() => setSearchTerm('')}>close</span>
+          )}
         </div>
       </div>
+
+      {/* ── Filter tabs ── */}
+      <div className="sidebar__filter-tabs">
+        {[
+          { key: 'all',    label: 'All' },
+          { key: 'online', label: `Online ${onlineCount > 0 ? `(${onlineCount})` : ''}` },
+          { key: 'groups', label: `Groups ${groups.length > 0 ? `(${groups.length})` : ''}` },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            className={`sidebar__filter-tab ${activeTab === tab.key ? 'sidebar__filter-tab--active' : ''}`}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Chat list ── */}
       <div className="sidebar__chats">
-        {groups
-          .filter(group => group.name.toLowerCase().includes(searchTerm.toLowerCase()))
-          .map(group => (
-            <SidebarChat 
-              key={group._id} 
-              id={group._id} 
-              name={group.name} 
-              isGroup={true}
-              isOnline={false} 
-            />
-        ))}
+        {/* Groups section */}
+        {showGroups && filteredGroups.length > 0 && (
+          <>
+            <div className="sidebar__section-label">
+              <span className="material-icons">groups</span> Groups
+            </div>
+            {filteredGroups.map(group => (
+              <SidebarChat
+                key={group._id}
+                id={group._id}
+                name={group.name}
+                isGroup={true}
+                isOnline={false}
+              />
+            ))}
+          </>
+        )}
 
-        {contacts
-          .filter(contact => contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
-          .map(contact => (
-            <SidebarChat 
-              key={contact._id} 
-              id={contact._id} 
-              name={contact.name} 
-              isOnline={onlineUsers.includes(contact._id)} 
-              profilePic={contact.profilePic}
-              description={contact.description}
-            />
-        ))}
+        {/* Contacts section */}
+        {filteredContacts.length > 0 && (
+          <>
+            <div className="sidebar__section-label">
+              <span className="material-icons">person</span>
+              {activeTab === 'online' ? 'Online Now' : 'Contacts'}
+            </div>
+            {filteredContacts.map(contact => (
+              <SidebarChat
+                key={contact._id}
+                id={contact._id}
+                name={contact.name}
+                isOnline={onlineUsers.includes(contact._id)}
+                profilePic={contact.profilePic}
+                description={contact.description}
+              />
+            ))}
+          </>
+        )}
 
-        {contacts.length === 0 && groups.length === 0 && (
-          <div style={{padding: 20, textAlign: 'center', color: 'gray'}}>
-            No other users registered yet.
+        {/* Empty state */}
+        {filteredGroups.length === 0 && filteredContacts.length === 0 && (
+          <div className="sidebar__empty">
+            <div className="sidebar__empty-icon">
+              <span className="material-icons">
+                {searchTerm ? 'search_off' : activeTab === 'online' ? 'wifi_off' : 'chat_bubble_outline'}
+              </span>
+            </div>
+            <p>{searchTerm ? `No results for "${searchTerm}"` : activeTab === 'online' ? 'No one online right now' : 'No chats yet'}</p>
           </div>
         )}
       </div>
 
-      {/* Group Creation Modal */}
+      {/* ── Group Creation Modal ── */}
       {showGroupModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-overlay" onClick={() => setShowGroupModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Create Group</h3>
-              <span className="material-icons" onClick={() => setShowGroupModal(false)} style={{cursor: 'pointer'}}>close</span>
+              <div className="modal-header-left">
+                <div className="modal-header-icon" style={{ background: 'linear-gradient(135deg,#25D366,#128C7E)' }}>
+                  <span className="material-icons">group_add</span>
+                </div>
+                <h3>New Group</h3>
+              </div>
+              <span className="material-icons" onClick={() => setShowGroupModal(false)}>close</span>
             </div>
             <div className="modal-body">
-              <input 
-                type="text" 
-                placeholder="Group Name" 
-                value={groupName} 
-                onChange={(e) => setGroupName(e.target.value)} 
-                className="group-name-input"
-              />
-              <h4>Select Participants</h4>
-              <div className="participants-list">
-                {contacts.map(contact => (
-                  <div key={contact._id} className="participant-item" onClick={() => toggleParticipant(contact._id)}>
-                    <input type="checkbox" checked={selectedParticipants.includes(contact._id)} readOnly />
-                    {contact.profilePic ? (
-                      <img src={contact.profilePic} alt="dp" />
-                    ) : (
-                      <span className="material-icons">account_circle</span>
-                    )}
-                    <span>{contact.name}</span>
-                  </div>
-                ))}
+              <div className="modal-field">
+                <label>Group Name</label>
+                <input
+                  type="text"
+                  placeholder="Enter group name"
+                  value={groupName}
+                  onChange={e => setGroupName(e.target.value)}
+                  className="group-name-input"
+                />
+              </div>
+              <div className="modal-field">
+                <label>Add Participants ({selectedParticipants.length} selected)</label>
+                <div className="participants-list">
+                  {contacts.map(contact => (
+                    <div
+                      key={contact._id}
+                      className={`participant-item ${selectedParticipants.includes(contact._id) ? 'participant-item--selected' : ''}`}
+                      onClick={() => toggleParticipant(contact._id)}
+                    >
+                      {contact.profilePic
+                        ? <img src={contact.profilePic} alt={contact.name} />
+                        : <span className="material-icons">account_circle</span>}
+                      <span className="participant-name">{contact.name}</span>
+                      <div className={`participant-check ${selectedParticipants.includes(contact._id) ? 'participant-check--on' : ''}`}>
+                        <span className="material-icons">check</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="modal-footer">
-              <button onClick={handleCreateGroup} className="create-group-btn">Create</button>
+              <button className="modal-cancel-btn" onClick={() => setShowGroupModal(false)}>Cancel</button>
+              <button className="create-group-btn" onClick={handleCreateGroup}>
+                <span className="material-icons">group_add</span> Create Group
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Settings Modal */}
+      {/* ── Settings Modal ── */}
       {showSettingsModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Profile Settings</h3>
+              <div className="modal-header-left">
+                <div className="modal-header-icon" style={{ background: 'linear-gradient(135deg,#8A2BE2,#5c0099)' }}>
+                  <span className="material-icons">manage_accounts</span>
+                </div>
+                <h3>Profile Settings</h3>
+              </div>
               <span className="material-icons" onClick={() => setShowSettingsModal(false)}>close</span>
             </div>
             <div className="modal-body">
-              <div className="modal-field">
-                <label>Display Name</label>
-                <input type="text" name="name" value={settingsForm.name} onChange={handleSettingsChange} className="group-name-input" placeholder="Your name" />
-              </div>
-              <div className="modal-field">
-                <label>Email</label>
-                <input type="email" name="email" value={settingsForm.email} onChange={handleSettingsChange} className="group-name-input" placeholder="your@email.com" />
-              </div>
-              <div className="modal-field">
-                <label>Phone</label>
-                <input type="tel" name="phone" value={settingsForm.phone} onChange={handleSettingsChange} className="group-name-input" placeholder="+1 234 567 890" />
-              </div>
-              <div className="modal-field">
-                <label>About / Description</label>
-                <input type="text" name="description" value={settingsForm.description} onChange={handleSettingsChange} className="group-name-input" placeholder="Available" />
-              </div>
-              <div className="modal-field">
-                <label>New Password (leave blank to keep current)</label>
-                <input type="password" name="password" value={settingsForm.password} onChange={handleSettingsChange} className="group-name-input" placeholder="••••••••" />
-              </div>
+              {[
+                { label: 'Display Name', name: 'name', type: 'text', placeholder: 'Your name' },
+                { label: 'Email', name: 'email', type: 'email', placeholder: 'your@email.com' },
+                { label: 'Phone', name: 'phone', type: 'tel', placeholder: '+1 234 567 890' },
+                { label: 'About', name: 'description', type: 'text', placeholder: 'Available' },
+                { label: 'New Password', name: 'password', type: 'password', placeholder: '••••••••' },
+              ].map(({ label, name, type, placeholder }) => (
+                <div className="modal-field" key={name}>
+                  <label>{label}</label>
+                  <input
+                    type={type}
+                    name={name}
+                    value={settingsForm[name]}
+                    onChange={e => setSettingsForm(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                    className="group-name-input"
+                    placeholder={placeholder}
+                  />
+                </div>
+              ))}
             </div>
             <div className="modal-footer">
-              <button onClick={handleUpdateSettings} className="create-group-btn" disabled={settingsUpdating}>
+              <button className="modal-cancel-btn" onClick={() => setShowSettingsModal(false)}>Cancel</button>
+              <button className="create-group-btn" onClick={handleUpdateSettings} disabled={settingsUpdating}>
+                <span className="material-icons">save</span>
                 {settingsUpdating ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
