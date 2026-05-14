@@ -1,33 +1,96 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Status.css';
+import axiosStatus from './axiosStatus';
 
-// Status.jsx is now the VIEWER only.
-// The status contacts list lives in MediaSidebar (mode="status").
-// Communication: MediaSidebar dispatches 'status_select' custom event.
+// ─────────────────────────────────────────────────────────────
+// Views Panel — shown when owner taps the eye icon
+// ─────────────────────────────────────────────────────────────
+function ViewsPanel({ statusId, onClose }) {
+  const [views, setViews]     = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    axiosStatus.get(`/api/status/${statusId}/views`)
+      .then(r => setViews(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [statusId]);
+
+  const relTime = (d) => {
+    const diff = (Date.now() - new Date(d)) / 60000;
+    if (diff < 1)    return 'Just now';
+    if (diff < 60)   return `${Math.floor(diff)}m ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+    return `${Math.floor(diff / 1440)}d ago`;
+  };
+
+  return (
+    <div className="views-panel" onClick={e => e.stopPropagation()}>
+      <div className="views-panel-header">
+        <div className="views-panel-title">
+          <span className="material-icons">visibility</span>
+          <span>Viewed by {!loading ? views.length : '...'}</span>
+        </div>
+        <span className="material-icons views-panel-close" onClick={onClose}>close</span>
+      </div>
+
+      <div className="views-panel-list">
+        {loading ? (
+          <div className="views-panel-loader"><div className="views-spinner" /></div>
+        ) : views.length === 0 ? (
+          <div className="views-panel-empty">
+            <span className="material-icons">visibility_off</span>
+            <p>No views yet</p>
+          </div>
+        ) : (
+          views.map((v, i) => (
+            <div key={i} className="views-panel-row">
+              {v.userId?.profilePic
+                ? <img src={v.userId.profilePic} alt={v.userId.name} className="views-avatar" />
+                : <span className="material-icons views-avatar-icon">account_circle</span>
+              }
+              <div className="views-info">
+                <span className="views-name">{v.userId?.name || 'Unknown'}</span>
+                <span className="views-time">{relTime(v.viewedAt)}</span>
+              </div>
+              <span className="material-icons views-check">done_all</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Main Status Viewer Component
+// ─────────────────────────────────────────────────────────────
 function Status({ user }) {
   const [groupedStatuses, setGroupedStatuses] = useState([]);
-  const [activeUserIdx, setActiveUserIdx]     = useState(null);
+  const [activeUserIdx,   setActiveUserIdx]   = useState(null);
   const [activeStatusIdx, setActiveStatusIdx] = useState(0);
+  const [showViews,       setShowViews]       = useState(false);  // views panel
+  const viewRecordedRef = useRef(new Set());   // track which statusIds we've already recorded
 
-  // Receive status list from MediaSidebar via event
+  // ── Receive status list from MediaSidebar ──────────────────
   useEffect(() => {
     const listHandler = (e) => setGroupedStatuses(e.detail.list);
     window.addEventListener('status_list_update', listHandler);
     return () => window.removeEventListener('status_list_update', listHandler);
   }, []);
 
-  // Receive selected-contact index from MediaSidebar
+  // ── Receive selected-contact index from MediaSidebar ───────
   useEffect(() => {
     const selectHandler = (e) => {
       setActiveUserIdx(e.detail.idx);
       setActiveStatusIdx(0);
+      setShowViews(false);
     };
     window.addEventListener('status_select', selectHandler);
     return () => window.removeEventListener('status_select', selectHandler);
   }, []);
 
-  // Auto-advance for text/image
+  // ── Auto-advance for text/image ────────────────────────────
   useEffect(() => {
     let timer;
     if (activeUserIdx !== null) {
@@ -39,14 +102,34 @@ function Status({ user }) {
     return () => clearTimeout(timer);
   }, [activeUserIdx, activeStatusIdx, groupedStatuses]);
 
+  // ── Record view when status is opened ─────────────────────
+  useEffect(() => {
+    if (activeUserIdx === null) return;
+    const grp    = groupedStatuses[activeUserIdx];
+    const status = grp?.statuses[activeStatusIdx];
+    if (!status) return;
+
+    const isOwn = grp.user._id === user.user._id;
+    if (isOwn) return; // don't record own views
+
+    const sid = status._id;
+    if (viewRecordedRef.current.has(sid)) return; // already recorded this session
+
+    viewRecordedRef.current.add(sid);
+    axiosStatus.post(`/api/status/${sid}/view`, { viewerId: user.user._id })
+      .catch(() => {});
+  }, [activeUserIdx, activeStatusIdx, groupedStatuses]);
+
   const handleNext = () => {
     if (activeUserIdx === null) return;
     const grp = groupedStatuses[activeUserIdx];
     if (activeStatusIdx < grp.statuses.length - 1) {
       setActiveStatusIdx(p => p + 1);
+      setShowViews(false);
     } else if (activeUserIdx < groupedStatuses.length - 1) {
       setActiveUserIdx(p => p + 1);
       setActiveStatusIdx(0);
+      setShowViews(false);
     } else {
       setActiveUserIdx(null);
     }
@@ -54,19 +137,21 @@ function Status({ user }) {
 
   const handlePrev = (e) => {
     e.stopPropagation();
-    if (activeStatusIdx > 0) setActiveStatusIdx(p => p - 1);
+    if (activeStatusIdx > 0) { setActiveStatusIdx(p => p - 1); setShowViews(false); }
   };
 
   const relTime = (d) => {
     const diff = (Date.now() - new Date(d)) / 60000;
-    if (diff < 1) return 'Just now';
-    if (diff < 60) return `${Math.floor(diff)}m ago`;
+    if (diff < 1)    return 'Just now';
+    if (diff < 60)   return `${Math.floor(diff)}m ago`;
     if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
     return new Date(d).toLocaleDateString();
   };
 
   const activeGroup  = activeUserIdx !== null ? groupedStatuses[activeUserIdx] : null;
   const activeStatus = activeGroup?.statuses[activeStatusIdx];
+  const isOwnStatus  = activeGroup?.user._id === user.user._id;
+  const viewCount    = activeStatus?.views?.length ?? 0;
 
   return (
     <div className="status-main" style={{ flex: 1 }}>
@@ -80,7 +165,8 @@ function Status({ user }) {
         </div>
       ) : (
         <div className="status-viewer">
-          {/* Progress bars */}
+
+          {/* ── Progress bars ── */}
           <div className="viewer-header">
             <div className="viewer-progress-bars">
               {activeGroup.statuses.map((_, i) => (
@@ -95,22 +181,26 @@ function Status({ user }) {
                 </div>
               ))}
             </div>
+
+            {/* ── User info row ── */}
             <div className="viewer-user-row">
               <div className="viewer-user-info">
                 {activeGroup.user.profilePic
                   ? <img src={activeGroup.user.profilePic} alt="profile" />
                   : <span className="material-icons">account_circle</span>}
                 <div>
-                  <div className="viewer-user-name">{activeGroup.user.name}</div>
+                  <div className="viewer-user-name">
+                    {isOwnStatus ? 'My Status' : activeGroup.user.name}
+                  </div>
                   <div className="viewer-user-time">{relTime(activeStatus?.createdAt)}</div>
                 </div>
               </div>
-              <span className="material-icons close-viewer" onClick={() => setActiveUserIdx(null)}>close</span>
+              <span className="material-icons close-viewer" onClick={() => { setActiveUserIdx(null); setShowViews(false); }}>close</span>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="viewer-content-area" onClick={handleNext}>
+          {/* ── Content area ── */}
+          <div className="viewer-content-area" onClick={showViews ? () => setShowViews(false) : handleNext}>
             <div className="viewer-tap-prev" onClick={handlePrev} />
             <div className="viewer-tap-next" onClick={handleNext} />
 
@@ -137,6 +227,31 @@ function Status({ user }) {
               </div>
             )}
           </div>
+
+          {/* ── Views bar — only shown for own statuses ── */}
+          {isOwnStatus && (
+            <div
+              className="status-views-bar"
+              onClick={(e) => { e.stopPropagation(); setShowViews(v => !v); }}
+            >
+              <span className="material-icons">visibility</span>
+              <span className="status-views-count">{viewCount}</span>
+              <span className="status-views-label">
+                {viewCount === 1 ? 'view' : 'views'}
+              </span>
+              <span className="material-icons status-views-chevron">
+                {showViews ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}
+              </span>
+            </div>
+          )}
+
+          {/* ── Views Panel ── */}
+          {isOwnStatus && showViews && activeStatus && (
+            <ViewsPanel
+              statusId={activeStatus._id}
+              onClose={() => setShowViews(false)}
+            />
+          )}
         </div>
       )}
     </div>
