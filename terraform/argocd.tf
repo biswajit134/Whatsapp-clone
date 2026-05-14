@@ -19,8 +19,7 @@ resource "helm_release" "argocd" {
       server = {
         # Expose the ArgoCD UI on NodePort 30800 → host :8080
         service = {
-          type     = "NodePort"
-          nodePort = 30800
+          type     = "LoadBalancer"
         }
         # Disable TLS inside the cluster (terminate at the ingress/gateway level)
         extraArgs = ["--insecure"]
