@@ -72,18 +72,27 @@ kubectl get pods -A
 # Username: admin
 # Password: biswajit134
 
-# Open ArgoCD UI  → http://localhost:8080
-# Open App        → http://localhost        (via Istio IngressGateway)
+# 5. Get the MetalLB IP for the App (Istio)
+    GATEWAY_IP=$(kubectl -n istio-ingress get svc istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    echo "App URL: http://$GATEWAY_IP"
 
+    # 6. Get the MetalLB IP for ArgoCD
+    ARGOCD_IP=$(kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    echo "ArgoCD UI: http://$ARGOCD_IP"
 ```
 
-## Port mappings
+## Port mappings (MetalLB)
 
-| Host port | Kind NodePort | Service |
-|-----------|--------------|---------|
-| `80`      | `30080`      | Istio IngressGateway HTTP |
-| `443`     | `30443`      | Istio IngressGateway HTTPS |
-| `8080`    | `30800`      | Argo CD UI |
+MetalLB assigns real IPs from the Docker bridge network. On Windows/Mac, these IPs are internal to Docker. To reach them from your browser, use `kubectl port-forward`:
+
+```powershell
+# Access the App
+kubectl -n istio-ingress port-forward svc/istio-ingressgateway 80:80
+
+# Access ArgoCD
+kubectl -n argocd port-forward svc/argocd-server 8080:80
+```
+
 
 ## Destroy
 

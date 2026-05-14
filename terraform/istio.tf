@@ -18,7 +18,7 @@ resource "helm_release" "istio_base" {
   wait             = true
   timeout          = 300
 
-  set =[ {
+  set = [{
     name  = "defaultRevision"
     value = "default"
   }]
@@ -37,14 +37,14 @@ resource "helm_release" "istiod" {
   timeout    = 300
 
   # Keep resources low for local Kind development
-  set=[{ name = "pilot.resources.requests.cpu" , value = "100m" },
-  { name = "pilot.resources.requests.memory" , value = "256Mi" },
-  { name = "pilot.resources.limits.cpu" , value = "500m" },
-  { name = "pilot.resources.limits.memory" , value = "512Mi" },
+  set = [{ name = "pilot.resources.requests.cpu", value = "100m" },
+    { name = "pilot.resources.requests.memory", value = "256Mi" },
+    { name = "pilot.resources.limits.cpu", value = "500m" },
+    { name = "pilot.resources.limits.memory", value = "512Mi" },
 
-  # Single replica is enough for local dev
-  {name = "pilot.autoscaleMin", value = "1" },
-  {name = "pilot.autoscaleMax", value = "1" }]
+    # Single replica is enough for local dev
+    { name = "pilot.autoscaleMin", value = "1" },
+  { name = "pilot.autoscaleMax", value = "1" }]
 
 
   depends_on = [helm_release.istio_base]

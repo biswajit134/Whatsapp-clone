@@ -19,9 +19,10 @@ output "metallb_ip_range" {
 }
 
 output "argocd_ui_url" {
-  description = "Argo CD UI (NodePort, accessible from host)"
-  value       = "http://localhost:8080"
+  description = "Argo CD UI (LoadBalancer — MetalLB assigns the IP)"
+  value       = "Discover with: kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}'"
 }
+
 
 output "get_argocd_password" {
   description = "ArgoCD admin password (fixed during bootstrap)"
