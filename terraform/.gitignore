@@ -1,0 +1,15 @@
+# Terraform state (never commit!)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Generated kubeconfig (contains cluster credentials)
+kubeconfig.yaml
+
+# Terraform-generated resource files
+generated-*.yaml
+
+# Override files
+
+
