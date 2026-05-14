@@ -61,83 +61,95 @@ function Auth({ setUser }) {
 
   return (
     <div className="auth-wrapper">
-                  value={formData.email}
-                  onChange={handleChange}
-                  required 
-                />
-              </div>
-            </div>
-            
-            {!isLogin && (
-              <div className="form-group">
-                <label>Phone Number</label>
-                <div className="input-wrapper">
-                  <span className="material-icons input-icon">phone_iphone</span>
-                  <input 
-                    type="tel" 
-                    name="phone" 
-                    placeholder="e.g. +1 234 567 890" 
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required 
-                  />
-                </div>
+      <div className={`auth-container ${!isLogin ? "right-panel-active" : ""}`}>
+        
+        {/* Sign Up Form */}
+        <div className="form-container sign-up-container">
+          <form onSubmit={(e) => handleSubmit(e, false)}>
+            <h1>Create Account</h1>
+            {error && !isLogin && (
+              <div className="auth-error-box">
+                <span className="material-icons">error_outline</span>
+                <span>{error}</span>
               </div>
             )}
+            <div className="input-wrapper">
+              <input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} required />
+              <span className="material-icons input-icon">person</span>
+            </div>
+            <div className="input-wrapper">
+              <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
+              <span className="material-icons input-icon">email</span>
+            </div>
+            <div className="input-wrapper">
+              <input type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} required />
+              <span className="material-icons input-icon">phone</span>
+            </div>
+            <div className="input-wrapper">
+              <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
+              <span className="material-icons input-icon">lock</span>
+            </div>
             
-            <div className="form-group">
-              <label>Password</label>
-              <div className="input-wrapper">
-                <span className="material-icons input-icon">lock_outline</span>
-                <input 
-                  type="password" 
-                  name="password" 
-                  placeholder="••••••••" 
-                  value={formData.password}
-                  onChange={handleChange}
-                  required 
-                />
-              </div>
+            <div className="dp-upload-wrapper">
+              {formData.profilePic ? (
+                <img src={formData.profilePic} alt="Preview" className="dp-preview" />
+              ) : (
+                <span className="dp-placeholder">Profile Pic (Optional)</span>
+              )}
+              <label htmlFor="profilePic" className="dp-upload-btn">
+                <span className="material-icons">cloud_upload</span>
+                <span>{formData.profilePic ? 'Change' : 'Upload'}</span>
+              </label>
+              <input type="file" id="profilePic" accept="image/*" onChange={handleProfilePicSelect} style={{ display: 'none' }} />
             </div>
 
-            {!isLogin && (
-              <div className="form-group dp-upload-group">
-                <label>Profile Picture</label>
-                <div className="dp-upload-wrapper">
-                  <input 
-                    type="file" 
-                    id="profilePic"
-                    accept="image/*"
-                    onChange={handleProfilePicSelect}
-                    style={{ display: 'none' }}
-                  />
-                  <label htmlFor="profilePic" className="dp-upload-btn">
-                    <span className="material-icons">cloud_upload</span>
-                    <span>Choose file...</span>
-                  </label>
-                  {formData.profilePic ? (
-                    <img src={formData.profilePic} alt="Preview" className="dp-preview" />
-                  ) : (
-                    <span className="dp-placeholder">No file chosen</span>
-                  )}
-                </div>
-              </div>
-            )}
-            
             <button type="submit" className={`auth-submit-btn ${isLoading ? 'loading' : ''}`} disabled={isLoading}>
-              {isLoading ? <span className="loader"></span> : isLogin ? 'Sign In' : 'Sign Up'}
+              {isLoading ? <div className="loader"></div> : 'Sign Up'}
             </button>
           </form>
+        </div>
 
-          <div className="auth-footer">
-            <p>
-              {isLogin ? "Don't have an account?" : "Already have an account?"}
-              <button className="toggle-btn" onClick={() => setIsLogin(!isLogin)} type="button">
-                {isLogin ? "Sign up" : "Sign in"}
-              </button>
-            </p>
+        {/* Sign In Form */}
+        <div className="form-container sign-in-container">
+          <form onSubmit={(e) => handleSubmit(e, true)}>
+            <h1>Sign in</h1>
+            {error && isLogin && (
+              <div className="auth-error-box">
+                <span className="material-icons">error_outline</span>
+                <span>{error}</span>
+              </div>
+            )}
+            <div className="input-wrapper">
+              <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
+              <span className="material-icons input-icon">email</span>
+            </div>
+            <div className="input-wrapper">
+              <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
+              <span className="material-icons input-icon">lock</span>
+            </div>
+            <a href="#" className="forgot-password">Forgot your password?</a>
+            <button type="submit" className={`auth-submit-btn ${isLoading ? 'loading' : ''}`} disabled={isLoading}>
+              {isLoading ? <div className="loader"></div> : 'Sign In'}
+            </button>
+          </form>
+        </div>
+
+        {/* Sliding Overlay */}
+        <div className="overlay-container">
+          <div className="overlay">
+            <div className="overlay-panel overlay-left">
+              <h1>Welcome Back!</h1>
+              <p>To keep connected with us please login with your personal info</p>
+              <button className="ghost" type="button" onClick={() => { setIsLogin(true); setError(''); }}>Sign In</button>
+            </div>
+            <div className="overlay-panel overlay-right">
+              <h1>Hello, Friend!</h1>
+              <p>Enter your personal details and start your journey with us</p>
+              <button className="ghost" type="button" onClick={() => { setIsLogin(false); setError(''); }}>Sign Up</button>
+            </div>
           </div>
         </div>
+
       </div>
     </div>
   );
