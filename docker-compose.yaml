@@ -38,12 +38,14 @@ services:
       args:
         - VITE_API_URL=http://localhost:9000
         - VITE_NEWSFEED_API_URL=http://localhost:9001
+        - VITE_STATUS_API_URL=http://localhost:9002
     container_name: whatsapp_frontend
     ports:
       - "80:80"
     depends_on:
       - backend
       - newsfeed
+      - status
     restart: unless-stopped
 
   # Newsfeed Microservice
@@ -56,6 +58,22 @@ services:
       - "9001:9001"
     environment:
       - PORT=9001
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/whatsappdb
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  # Status Microservice
+  status:
+    build:
+      context: ./status
+      dockerfile: Dockerfile
+    container_name: whatsapp_status
+    ports:
+      - "9002:9002"
+    environment:
+      - PORT=9002
       - NODE_ENV=production
       - MONGO_URI=mongodb://mongo:27017/whatsappdb
     depends_on:

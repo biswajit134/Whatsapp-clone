@@ -97,6 +97,9 @@ function Sidebar({ user, setUser, onlineUsers, theme, toggleTheme }) {
           <span style={{fontWeight: 600, color: 'var(--text-primary)', fontSize: '16px'}}>{user?.user?.name}</span>
         </div>
         <div className="sidebar__headerRight">
+          <span className="material-icons" onClick={() => navigate('/status')} style={{cursor: 'pointer'}} title="Status">
+            donut_large
+          </span>
           <span className="material-icons" onClick={() => navigate('/newsfeed')} style={{cursor: 'pointer'}} title="Newsfeed">
             dynamic_feed
           </span>

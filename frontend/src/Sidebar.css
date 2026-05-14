@@ -6,25 +6,31 @@
 
 .sidebar__header {
   display: flex;
-  justify-content: flex-end;
-  padding: 20px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
   border-right: 1px solid var(--border-color);
   background-color: var(--bg-header);
   transition: background-color 0.3s;
+  height: 64px;
+  box-sizing: border-box;
 }
 
 .sidebar__headerRight {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  min-width: 10vw;
+  gap: 16px;
 }
 
 .sidebar__headerRight > .material-icons {
-  margin-right: 2vw;
   font-size: 24px !important;
   color: var(--icon-color);
   cursor: pointer;
+  transition: color 0.2s;
+}
+
+.sidebar__headerRight > .material-icons:hover {
+  color: var(--text-primary);
 }
 
 .sidebar__search {

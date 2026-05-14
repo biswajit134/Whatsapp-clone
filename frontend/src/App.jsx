@@ -5,8 +5,9 @@ import Chat from './Chat';
 import Auth from './Auth';
 import AudioCall from './AudioCall';
 import Newsfeed from './Newsfeed';
+import Status from './Status';
 import socket from './socket';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -61,15 +62,9 @@ function App() {
           <Sidebar user={user} setUser={setUser} onlineUsers={onlineUsers} theme={theme} toggleTheme={toggleTheme} />
           <Routes>
             <Route path="/newsfeed" element={<Newsfeed user={user} />} />
+            <Route path="/status" element={<Status user={user} />} />
             <Route path="/rooms/:otherUserId" element={<Chat user={user} onlineUsers={onlineUsers} />} />
-            <Route path="/" element={
-              <div className="chat">
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column', color: 'gray' }}>
-                  <h2>Welcome to WhatsApp Clone, {user.user.name}</h2>
-                  <p>Select a chat or create a new one to start messaging</p>
-                </div>
-              </div>
-            } />
+            <Route path="/" element={<Navigate to="/newsfeed" replace />} />
           </Routes>
         </Router>
       </div>
