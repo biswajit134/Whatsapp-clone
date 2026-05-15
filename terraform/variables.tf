@@ -69,3 +69,14 @@ variable "metallb_ip_range" {
   default     = "172.18.255.200-172.18.255.250"
 }
 
+variable "prometheus_version" {
+  description = "Prometheus Helm chart version"
+  type        = string
+  default     = "25.21.0"
+}
+
+variable "kiali_version" {
+  description = "Kiali Helm chart version"
+  type        = string
+  default     = "1.84.0"
+}

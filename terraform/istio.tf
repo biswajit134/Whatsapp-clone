@@ -84,3 +84,32 @@ resource "helm_release" "istio_ingressgateway" {
     null_resource.metallb_config,
   ]
 }
+
+# ── 4. Istio Gateway ─────────────────────────────────────────────────────────
+# Defines a shared gateway for all VirtualServices to use.
+resource "kubernetes_manifest" "istio_gateway" {
+  manifest = {
+    apiVersion = "networking.istio.io/v1alpha3"
+    kind       = "Gateway"
+    metadata = {
+      name      = "ingressgateway"
+      namespace = "istio-ingress"
+    }
+    spec = {
+      selector = {
+        istio = "ingressgateway" # Matches the label of the ingressgateway pod
+      }
+      servers = [
+        {
+          port = {
+            number   = 80
+            name     = "http"
+            protocol = "HTTP"
+          }
+          hosts = ["*"]
+        }
+      ]
+    }
+  }
+  depends_on = [helm_release.istio_ingressgateway]
+}

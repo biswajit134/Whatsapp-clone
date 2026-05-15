@@ -23,6 +23,11 @@ output "argocd_ui_url" {
   value       = "Discover with: kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}'"
 }
 
+output "kiali_ui_url" {
+  description = "Kiali Dashboard URL (path-based on Istio Ingress)"
+  value       = "Access at: http://<GATEWAY_IP>/kiali"
+}
+
 
 output "get_argocd_password" {
   description = "ArgoCD admin password (fixed during bootstrap)"
@@ -59,5 +64,8 @@ output "next_steps" {
       -o jsonpath='{.data.password}' | base64 -d
 
     # 6. Open ArgoCD UI → http://localhost:8080
+    
+    # 7. Open Kiali Dashboard → http://localhost/kiali (if port-forwarding 80:80)
+    #    Username: anonymous (no password needed)
   EOT
 }
