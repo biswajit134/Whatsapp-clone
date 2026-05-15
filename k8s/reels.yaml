@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reels
+  namespace: whatsapp
+  labels:
+    app: reels
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reels
+  template:
+    metadata:
+      labels:
+        app: reels
+    spec:
+      containers:
+        - name: reels
+          image: ghcr.io/biswajit134/whatsapp-devops/reels:latest
+          ports:
+            - containerPort: 9003
+          env:
+            - name: PORT
+              value: "9003"
+            - name: NODE_ENV
+              value: production
+            - name: MONGO_URI
+              value: mongodb://mongo:27017/whatsappdb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reels
+  namespace: whatsapp
+  labels:
+    app: reels
+spec:
+  ports:
+    - port: 9003
+      targetPort: 9003
+  selector:
+    app: reels

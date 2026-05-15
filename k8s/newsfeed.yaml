@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: newsfeed
+  namespace: whatsapp
+  labels:
+    app: newsfeed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: newsfeed
+  template:
+    metadata:
+      labels:
+        app: newsfeed
+    spec:
+      containers:
+        - name: newsfeed
+          image: ghcr.io/biswajit134/whatsapp-devops/newsfeed:latest
+          ports:
+            - containerPort: 9001
+          env:
+            - name: PORT
+              value: "9001"
+            - name: NODE_ENV
+              value: production
+            - name: MONGO_URI
+              value: mongodb://mongo:27017/whatsappdb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: newsfeed
+  namespace: whatsapp
+  labels:
+    app: newsfeed
+spec:
+  ports:
+    - port: 9001
+      targetPort: 9001
+  selector:
+    app: newsfeed

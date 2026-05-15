@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: status
+  namespace: whatsapp
+  labels:
+    app: status
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: status
+  template:
+    metadata:
+      labels:
+        app: status
+    spec:
+      containers:
+        - name: status
+          image: ghcr.io/biswajit134/whatsapp-devops/status:latest
+          ports:
+            - containerPort: 9002
+          env:
+            - name: PORT
+              value: "9002"
+            - name: NODE_ENV
+              value: production
+            - name: MONGO_URI
+              value: mongodb://mongo:27017/whatsappdb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: status
+  namespace: whatsapp
+  labels:
+    app: status
+spec:
+  ports:
+    - port: 9002
+      targetPort: 9002
+  selector:
+    app: status
